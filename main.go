@@ -24,6 +24,7 @@ var (
 	pName      *string
 	pOutputDir *string
 	pVerbose   *bool
+	pFormat    *string
 	pWidth     *int
 	pHeight    *int
 )
@@ -40,9 +41,15 @@ func main() {
 	pName = flag.String("name", "atlas", "the base name of the output images and data files")
 	pOutputDir = flag.String("out", "", "the directory to output the result to")
 	pVerbose = flag.Bool("v", false, "use verbose logging")
+	pFormat = flag.String("format", "starling", "the export format of the atlas")
 	pWidth = flag.Int("width", 2048, "maximum width of an atlas image")
 	pHeight = flag.Int("height", 2048, "maximum height of an atlas image")
 	flag.Parse()
+
+	// Validate the parameters
+	if !FormatIsValid(*pFormat) {
+		log.Fatalf("Format '%s' is not valid", *pFormat)
+	}
 
 	// Get the input directory
 	args := flag.Args()
@@ -72,7 +79,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	err = createDescriptor("starling.template", "xml", sprites)
+	err = createDescriptor(FormatLookup[*pFormat], sprites)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -153,14 +160,14 @@ type descriptor struct {
 
 const templatesDir = "templates"
 
-func createDescriptor(templateFile string, outputFormat string, sprites []packing.Block) error {
-	t, err := template.ParseFiles(path.Join(templatesDir, templateFile))
+func createDescriptor(format Format, sprites []packing.Block) error {
+	t, err := template.ParseFiles(path.Join(templatesDir, format.Template))
 	if err != nil {
 		return err
 	}
 
 	index := 1
-	filename := fmt.Sprintf("%s-%d.%s", *pName, index, outputFormat)
+	filename := fmt.Sprintf("%s-%d.%s", *pName, index, format.Ext)
 	writer, err := os.Create(path.Join(*pOutputDir, filename))
 	if err != nil {
 		logVerbose("Failed to create desc writer '%s'", err.Error())
