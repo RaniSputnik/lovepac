@@ -19,6 +19,8 @@ import (
 	"github.com/RaniSputnik/packing"
 )
 
+const templatesDir = "templates"
+
 // Command line arguments
 var (
 	pName      *string
@@ -61,6 +63,12 @@ func main() {
 	}
 	inputDir := args[0]
 
+	// Create the template that we will use to render descriptor files
+	template, err := template.ParseFiles(path.Join(templatesDir, descFormat.Template))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
 	// Read the images from the input directory
 	sprites, err := readDirectory(inputDir)
 	if err != nil {
@@ -88,20 +96,22 @@ func main() {
 		Height:    *pHeight,
 	}
 
-	// Create and write the resulting image
-	err = createImage(atlases)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	// Create and write the file that describes the image
-	err = createDescriptor(descFormat, atlases)
-	if err != nil {
-		log.Fatal(err.Error())
+	// TODO should be able to execute all atlases concurrently
+	// TODO should write descriptor and image concurrently
+	for _, atlas := range atlases {
+		// Create and write the resulting image
+		err = createImage(atlas)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		// Create and write the file that describes the image
+		err = createDescriptor(template, atlas)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
 	}
 }
 
-// ReadSprites returns all spritees found in the provided directory
 func readDirectory(dir string) ([]packing.Block, error) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
@@ -142,51 +152,37 @@ func readDirectory(dir string) ([]packing.Block, error) {
 	return sprites, nil
 }
 
-func createImage(atlases []*Atlas) error {
-	// TODO should be able to execute concurrently
-	for _, atlas := range atlases {
-		img := image.NewRGBA(image.Rect(0, 0, *pWidth, *pHeight))
+func createImage(atlas *Atlas) error {
+	img := image.NewRGBA(image.Rect(0, 0, *pWidth, *pHeight))
 
-		for i := range atlas.Sprites {
-			spr := atlas.Sprites[i].(*sprite)
-			rect := image.Rect(spr.x, spr.y, spr.x+spr.w, spr.y+spr.h)
-			draw.Draw(img, rect, spr.img, image.ZP, draw.Src)
-		}
+	for i := range atlas.Sprites {
+		spr := atlas.Sprites[i].(*sprite)
+		rect := image.Rect(spr.x, spr.y, spr.x+spr.w, spr.y+spr.h)
+		draw.Draw(img, rect, spr.img, image.ZP, draw.Src)
+	}
 
-		writer, err := os.Create(path.Join(*pOutputDir, atlas.ImagePath))
-		if err != nil {
-			logVerbose("Failed to create image writer '%s'", err.Error())
-			return err
-		}
-		defer writer.Close()
+	writer, err := os.Create(path.Join(*pOutputDir, atlas.ImagePath))
+	if err != nil {
+		logVerbose("Failed to create image writer '%s'", err.Error())
+		return err
+	}
+	defer writer.Close()
 
-		err = png.Encode(writer, img)
-		if err != nil {
-			return err
-		}
+	err = png.Encode(writer, img)
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-const templatesDir = "templates"
-
-func createDescriptor(format Format, atlases []*Atlas) error {
-	t, err := template.ParseFiles(path.Join(templatesDir, format.Template))
+func createDescriptor(t *template.Template, atlas *Atlas) error {
+	writer, err := os.Create(path.Join(*pOutputDir, atlas.DescPath))
 	if err != nil {
+		logVerbose("Failed to create desc writer '%s'", err.Error())
 		return err
 	}
-
-	// TODO should be able to execute concurrently
-	for _, atlas := range atlases {
-		writer, err := os.Create(path.Join(*pOutputDir, atlas.DescPath))
-		if err != nil {
-			logVerbose("Failed to create desc writer '%s'", err.Error())
-			return err
-		}
-		defer writer.Close()
-		t.Execute(writer, atlas)
-	}
-
+	defer writer.Close()
+	t.Execute(writer, atlas)
 	return nil
 }
 
