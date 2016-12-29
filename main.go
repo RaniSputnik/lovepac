@@ -74,13 +74,22 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	// TODO dynamically adjust number of atlases
+	atlases := make([]*Atlas, 1)
+	atlases[0] = &Atlas{
+		Name:   fmt.Sprintf("%s-%d", *pName, 1),
+		Width:  *pWidth,
+		Height: *pHeight,
+	}
+
 	// Create and write the resulting image
 	err = createImage(sprites)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	err = createDescriptor(FormatLookup[*pFormat], sprites)
+	// Create and write the file that describes the image
+	err = createDescriptor(FormatLookup[*pFormat], sprites, atlases)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -136,6 +145,7 @@ func createImage(sprites []packing.Block) error {
 		draw.Draw(img, rect, spr.img, image.ZP, draw.Src)
 	}
 
+	// TODO remove hardcoded name
 	index := 1
 	format := "png"
 	filename := fmt.Sprintf("%s-%d.%s", *pName, index, format)
@@ -157,16 +167,18 @@ type descriptor struct {
 	DescPath  string
 	ImagePath string
 	Files     []packing.Block
+	Atlas     *Atlas
 }
 
 const templatesDir = "templates"
 
-func createDescriptor(format Format, sprites []packing.Block) error {
+func createDescriptor(format Format, sprites []packing.Block, atlases []*Atlas) error {
 	t, err := template.ParseFiles(path.Join(templatesDir, format.Template))
 	if err != nil {
 		return err
 	}
 
+	// TODO remove hardcoded name
 	index := 1
 	filename := fmt.Sprintf("%s-%d.%s", *pName, index, format.Ext)
 	writer, err := os.Create(path.Join(*pOutputDir, filename))
@@ -181,6 +193,8 @@ func createDescriptor(format Format, sprites []packing.Block) error {
 		DescPath:  filename,
 		ImagePath: fmt.Sprintf("%s-%d.%s", *pName, index, imageformat),
 		Files:     sprites,
+		// TODO not just the first atlas
+		Atlas: atlases[0],
 	})
 	return nil
 }

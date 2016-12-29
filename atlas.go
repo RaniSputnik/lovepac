@@ -1,11 +1,7 @@
 package main
 
-import (
-	"image"
-)
-
 type Atlas struct {
-	Name  string
-	Image image.Image
-	Data  []byte
+	Name   string
+	Width  int
+	Height int
 }
