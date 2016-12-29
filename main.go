@@ -56,6 +56,7 @@ func main() {
 	if len(args) < 1 {
 		fmt.Fprintf(os.Stderr, "Too few arguments passed, missing input directory \n\n")
 		flag.Usage()
+		return
 	}
 	inputDir := args[0]
 
