@@ -1,5 +1,5 @@
 <TextureAtlas imagePath="{{.ImagePath}}">
-{{- range .Files}}
+{{- range .Sprites}}
     <SubTexture name="{{.Name}}" x="{{.Left}}" y="{{.Top}}" width="{{.Width}}" height="{{.Height}}"/>
 {{- end}}
 </TextureAtlas>

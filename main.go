@@ -50,6 +50,7 @@ func main() {
 	if !FormatIsValid(*pFormat) {
 		log.Fatalf("Format '%s' is not valid", *pFormat)
 	}
+	descFormat := FormatLookup[*pFormat]
 
 	// Get the input directory
 	args := flag.Args()
@@ -76,20 +77,25 @@ func main() {
 
 	// TODO dynamically adjust number of atlases
 	atlases := make([]*Atlas, 1)
+	atlasName := fmt.Sprintf("%s-%d", *pName, 1)
 	atlases[0] = &Atlas{
-		Name:   fmt.Sprintf("%s-%d", *pName, 1),
-		Width:  *pWidth,
-		Height: *pHeight,
+		Name:     atlasName,
+		Sprites:  sprites,
+		DescPath: fmt.Sprintf("%s.%s", atlasName, descFormat.Ext),
+		// TODO add image type parameter
+		ImagePath: fmt.Sprintf("%s.%s", atlasName, "png"),
+		Width:     *pWidth,
+		Height:    *pHeight,
 	}
 
 	// Create and write the resulting image
-	err = createImage(sprites)
+	err = createImage(atlases)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
 	// Create and write the file that describes the image
-	err = createDescriptor(FormatLookup[*pFormat], sprites, atlases)
+	err = createDescriptor(descFormat, atlases)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -136,66 +142,51 @@ func readDirectory(dir string) ([]packing.Block, error) {
 	return sprites, nil
 }
 
-func createImage(sprites []packing.Block) error {
-	img := image.NewRGBA(image.Rect(0, 0, *pWidth, *pHeight))
+func createImage(atlases []*Atlas) error {
+	// TODO should be able to execute concurrently
+	for _, atlas := range atlases {
+		img := image.NewRGBA(image.Rect(0, 0, *pWidth, *pHeight))
 
-	for i := range sprites {
-		spr := sprites[i].(*sprite)
-		rect := image.Rect(spr.x, spr.y, spr.x+spr.w, spr.y+spr.h)
-		draw.Draw(img, rect, spr.img, image.ZP, draw.Src)
-	}
+		for i := range atlas.Sprites {
+			spr := atlas.Sprites[i].(*sprite)
+			rect := image.Rect(spr.x, spr.y, spr.x+spr.w, spr.y+spr.h)
+			draw.Draw(img, rect, spr.img, image.ZP, draw.Src)
+		}
 
-	// TODO remove hardcoded name
-	index := 1
-	format := "png"
-	filename := fmt.Sprintf("%s-%d.%s", *pName, index, format)
-	writer, err := os.Create(path.Join(*pOutputDir, filename))
-	if err != nil {
-		logVerbose("Failed to create image writer '%s'", err.Error())
-		return err
-	}
-	defer writer.Close()
+		writer, err := os.Create(path.Join(*pOutputDir, atlas.ImagePath))
+		if err != nil {
+			logVerbose("Failed to create image writer '%s'", err.Error())
+			return err
+		}
+		defer writer.Close()
 
-	err = png.Encode(writer, img)
-	if err != nil {
-		return err
+		err = png.Encode(writer, img)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-type descriptor struct {
-	DescPath  string
-	ImagePath string
-	Files     []packing.Block
-	Atlas     *Atlas
-}
-
 const templatesDir = "templates"
 
-func createDescriptor(format Format, sprites []packing.Block, atlases []*Atlas) error {
+func createDescriptor(format Format, atlases []*Atlas) error {
 	t, err := template.ParseFiles(path.Join(templatesDir, format.Template))
 	if err != nil {
 		return err
 	}
 
-	// TODO remove hardcoded name
-	index := 1
-	filename := fmt.Sprintf("%s-%d.%s", *pName, index, format.Ext)
-	writer, err := os.Create(path.Join(*pOutputDir, filename))
-	if err != nil {
-		logVerbose("Failed to create desc writer '%s'", err.Error())
-		return err
+	// TODO should be able to execute concurrently
+	for _, atlas := range atlases {
+		writer, err := os.Create(path.Join(*pOutputDir, atlas.DescPath))
+		if err != nil {
+			logVerbose("Failed to create desc writer '%s'", err.Error())
+			return err
+		}
+		defer writer.Close()
+		t.Execute(writer, atlas)
 	}
-	defer writer.Close()
 
-	imageformat := "png"
-	t.Execute(writer, &descriptor{
-		DescPath:  filename,
-		ImagePath: fmt.Sprintf("%s-%d.%s", *pName, index, imageformat),
-		Files:     sprites,
-		// TODO not just the first atlas
-		Atlas: atlases[0],
-	})
 	return nil
 }
 

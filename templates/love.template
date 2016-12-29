@@ -1,7 +1,7 @@
 local quads = {}
 
-{{range .Files -}}
-quads['{{.Name}}'] = love.graphics.newQuad({{.Left}},{{.Top}},{{.Width}},{{.Height}},{{$.Atlas.Width}},{{$.Atlas.Height}})
+{{range .Sprites -}}
+quads['{{.Name}}'] = love.graphics.newQuad({{.Left}},{{.Top}},{{.Width}},{{.Height}},{{$.Width}},{{$.Height}})
 {{end}}
 
 return quads
