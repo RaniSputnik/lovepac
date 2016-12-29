@@ -7,6 +7,7 @@ type Format struct {
 
 var FormatLookup = map[string]Format{
 	"starling": Format{Template: "starling.template", Ext: "xml"},
+	"love":     Format{Template: "love.template", Ext: "lua"},
 }
 
 func FormatIsValid(format string) bool {
