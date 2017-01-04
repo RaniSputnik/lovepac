@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"image"
-	"image/draw"
 	_ "image/gif"
 	_ "image/jpeg"
 	"image/png"
@@ -153,13 +152,7 @@ func readDirectory(dir string) ([]packing.Block, error) {
 }
 
 func createImage(atlas *Atlas) error {
-	img := image.NewRGBA(image.Rect(0, 0, *pWidth, *pHeight))
-
-	for i := range atlas.Sprites {
-		spr := atlas.Sprites[i].(*sprite)
-		rect := image.Rect(spr.x, spr.y, spr.x+spr.w, spr.y+spr.h)
-		draw.Draw(img, rect, spr.img, image.ZP, draw.Src)
-	}
+	img := atlas.CreateImage()
 
 	writer, err := os.Create(path.Join(*pOutputDir, atlas.ImagePath))
 	if err != nil {
