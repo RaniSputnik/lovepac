@@ -19,7 +19,7 @@ type Atlas struct {
 }
 
 func (a *Atlas) CreateImage() *image.RGBA {
-	img := image.NewRGBA(image.Rect(0, 0, *pWidth, *pHeight))
+	img := image.NewRGBA(image.Rect(0, 0, a.Width, a.Height))
 
 	for i := range a.Sprites {
 		spr := a.Sprites[i].(*sprite)

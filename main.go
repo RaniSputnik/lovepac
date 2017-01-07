@@ -21,14 +21,7 @@ import (
 const templatesDir = "templates"
 
 // Command line arguments
-var (
-	pName      *string
-	pOutputDir *string
-	pVerbose   *bool
-	pFormat    *string
-	pWidth     *int
-	pHeight    *int
-)
+var pVerbose *bool
 
 func main() {
 
@@ -39,19 +32,13 @@ func main() {
 	}
 
 	// Set and parse the command line arguments
-	pName = flag.String("name", "atlas", "the base name of the output images and data files")
-	pOutputDir = flag.String("out", "", "the directory to output the result to")
+	pName := flag.String("name", "atlas", "the base name of the output images and data files")
+	pOutputDir := flag.String("out", "", "the directory to output the result to")
 	pVerbose = flag.Bool("v", false, "use verbose logging")
-	pFormat = flag.String("format", "starling", "the export format of the atlas")
-	pWidth = flag.Int("width", 2048, "maximum width of an atlas image")
-	pHeight = flag.Int("height", 2048, "maximum height of an atlas image")
+	pFormat := flag.String("format", "starling", "the export format of the atlas")
+	pWidth := flag.Int("width", 2048, "maximum width of an atlas image")
+	pHeight := flag.Int("height", 2048, "maximum height of an atlas image")
 	flag.Parse()
-
-	// Validate the parameters
-	if !FormatIsValid(*pFormat) {
-		log.Fatalf("Format '%s' is not valid", *pFormat)
-	}
-	descFormat := FormatLookup[*pFormat]
 
 	// Get the input directory
 	args := flag.Args()
@@ -62,53 +49,83 @@ func main() {
 	}
 	inputDir := args[0]
 
+	err := Run(&Params{
+		Name:   *pName,
+		Input:  inputDir,
+		Output: *pOutputDir,
+		Format: *pFormat,
+		Width:  *pWidth,
+		Height: *pHeight,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+type Params struct {
+	Name          string
+	Input         string
+	Output        string
+	Format        string
+	Width, Height int
+}
+
+func Run(params *Params) error {
+	// Validate the parameters
+	if !FormatIsValid(params.Format) {
+		return fmt.Errorf("Format '%s' is not valid", params.Format)
+	}
+	descFormat := FormatLookup[params.Format]
+
 	// Create the template that we will use to render descriptor files
 	template, err := template.ParseFiles(path.Join(templatesDir, descFormat.Template))
 	if err != nil {
-		log.Fatal(err.Error())
+		return err
 	}
 
 	// Read the images from the input directory
-	sprites, err := readDirectory(inputDir)
+	sprites, err := readDirectory(params.Input)
 	if err != nil {
-		log.Fatal(err.Error())
+		return err
 	}
 
 	// Arrange the images into the atlas space
 	packer := &packing.BinPacker{}
 	sort.Sort(packing.ByArea(sprites))
-	err = packer.Fit(*pWidth, *pHeight, sprites...)
+	err = packer.Fit(params.Width, params.Height, sprites...)
 	if err != nil {
-		log.Fatal(err.Error())
+		return err
 	}
 
 	// TODO dynamically adjust number of atlases
 	atlases := make([]*Atlas, 1)
-	atlasName := fmt.Sprintf("%s-%d", *pName, 1)
+	atlasName := fmt.Sprintf("%s-%d", params.Name, 1)
 	atlases[0] = &Atlas{
 		Name:     atlasName,
 		Sprites:  sprites,
 		DescPath: fmt.Sprintf("%s.%s", atlasName, descFormat.Ext),
 		// TODO add image type parameter
 		ImagePath: fmt.Sprintf("%s.%s", atlasName, "png"),
-		Width:     *pWidth,
-		Height:    *pHeight,
+		Width:     params.Width,
+		Height:    params.Height,
 	}
 
 	// TODO should be able to execute all atlases concurrently
 	// TODO should write descriptor and image concurrently
 	for _, atlas := range atlases {
 		// Create and write the resulting image
-		err = createImage(atlas)
+		err = createImage(atlas, params.Output)
 		if err != nil {
-			log.Fatal(err.Error())
+			return err
 		}
 		// Create and write the file that describes the image
-		err = createDescriptor(template, atlas)
+		err = createDescriptor(template, atlas, params.Output)
 		if err != nil {
-			log.Fatal(err.Error())
+			return err
 		}
 	}
+
+	return nil
 }
 
 func readDirectory(dir string) ([]packing.Block, error) {
@@ -151,10 +168,10 @@ func readDirectory(dir string) ([]packing.Block, error) {
 	return sprites, nil
 }
 
-func createImage(atlas *Atlas) error {
+func createImage(atlas *Atlas, outputDir string) error {
 	img := atlas.CreateImage()
 
-	writer, err := os.Create(path.Join(*pOutputDir, atlas.ImagePath))
+	writer, err := os.Create(path.Join(outputDir, atlas.ImagePath))
 	if err != nil {
 		logVerbose("Failed to create image writer '%s'", err.Error())
 		return err
@@ -168,8 +185,8 @@ func createImage(atlas *Atlas) error {
 	return nil
 }
 
-func createDescriptor(t *template.Template, atlas *Atlas) error {
-	writer, err := os.Create(path.Join(*pOutputDir, atlas.DescPath))
+func createDescriptor(t *template.Template, atlas *Atlas, outputDir string) error {
+	writer, err := os.Create(path.Join(outputDir, atlas.DescPath))
 	if err != nil {
 		logVerbose("Failed to create desc writer '%s'", err.Error())
 		return err
