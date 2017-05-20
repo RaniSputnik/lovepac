@@ -2,7 +2,6 @@ package packer
 
 import (
 	"fmt"
-	"html/template"
 	"image"
 	"image/png"
 	"io/ioutil"
@@ -10,11 +9,10 @@ import (
 	"os"
 	"path"
 	"sort"
+	"text/template"
 
 	"github.com/RaniSputnik/packing"
 )
-
-const templatesDir = "templates"
 
 type Params struct {
 	Name          string
@@ -30,12 +28,6 @@ func Run(params *Params) error {
 		return fmt.Errorf("Format '%s' is not valid", params.Format)
 	}
 	descFormat := FormatLookup[params.Format]
-
-	// Create the template that we will use to render descriptor files
-	template, err := template.ParseFiles(path.Join(templatesDir, descFormat.Template))
-	if err != nil {
-		return err
-	}
 
 	// Read the images from the input directory
 	sprites, err := readDirectory(params.Input)
@@ -73,7 +65,7 @@ func Run(params *Params) error {
 			return err
 		}
 		// Create and write the file that describes the image
-		err = createDescriptor(template, atlas, params.Output)
+		err = createDescriptor(descFormat.Template, atlas, params.Output)
 		if err != nil {
 			return err
 		}

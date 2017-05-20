@@ -1,13 +1,19 @@
 package packer
 
+import (
+	"text/template"
+
+	"github.com/RaniSputnik/lovepac/templates"
+)
+
 type Format struct {
-	Template string
+	Template *template.Template
 	Ext      string
 }
 
 var FormatLookup = map[string]Format{
-	"starling": Format{Template: "starling.template", Ext: "xml"},
-	"love":     Format{Template: "love.template", Ext: "lua"},
+	"starling": Format{Template: templates.Starling, Ext: "xml"},
+	"love":     Format{Template: templates.Love, Ext: "lua"},
 }
 
 func FormatIsValid(format string) bool {
