@@ -1,4 +1,4 @@
-package main
+package packer
 
 type Format struct {
 	Template string
