@@ -44,7 +44,7 @@ func main() {
 	err := packer.Run(&packer.Params{
 		Name:   *pName,
 		Input:  inputDir,
-		Output: *pOutputDir,
+		Output: &packer.FileOutputter{OutputDirectory: *pOutputDir},
 		Format: *pFormat,
 		Width:  *pWidth,
 		Height: *pHeight,

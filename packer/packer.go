@@ -17,7 +17,7 @@ import (
 type Params struct {
 	Name          string
 	Input         string
-	Output        string
+	Output        Outputter
 	Format        string
 	Width, Height int
 }
@@ -47,13 +47,13 @@ func Run(params *Params) error {
 	atlases := make([]*Atlas, 1)
 	atlasName := fmt.Sprintf("%s-%d", params.Name, 1)
 	atlases[0] = &Atlas{
-		Name:     atlasName,
-		Sprites:  sprites,
-		DescPath: fmt.Sprintf("%s.%s", atlasName, descFormat.Ext),
+		Name:         atlasName,
+		Sprites:      sprites,
+		DescFilename: fmt.Sprintf("%s.%s", atlasName, descFormat.Ext),
 		// TODO add image type parameter
-		ImagePath: fmt.Sprintf("%s.%s", atlasName, "png"),
-		Width:     params.Width,
-		Height:    params.Height,
+		ImageFilename: fmt.Sprintf("%s.%s", atlasName, "png"),
+		Width:         params.Width,
+		Height:        params.Height,
 	}
 
 	// TODO should be able to execute all atlases concurrently
@@ -114,10 +114,10 @@ func readDirectory(dir string) ([]packing.Block, error) {
 	return sprites, nil
 }
 
-func createImage(atlas *Atlas, outputDir string) error {
+func createImage(atlas *Atlas, outputter Outputter) error {
 	img := atlas.CreateImage()
 
-	writer, err := os.Create(path.Join(outputDir, atlas.ImagePath))
+	writer, err := outputter.GetWriter(atlas.ImageFilename)
 	if err != nil {
 		logVerbose("Failed to create image writer '%s'", err.Error())
 		return err
@@ -131,8 +131,8 @@ func createImage(atlas *Atlas, outputDir string) error {
 	return nil
 }
 
-func createDescriptor(t *template.Template, atlas *Atlas, outputDir string) error {
-	writer, err := os.Create(path.Join(outputDir, atlas.DescPath))
+func createDescriptor(t *template.Template, atlas *Atlas, outputter Outputter) error {
+	writer, err := outputter.GetWriter(atlas.DescFilename)
 	if err != nil {
 		logVerbose("Failed to create desc writer '%s'", err.Error())
 		return err

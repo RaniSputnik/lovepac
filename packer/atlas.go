@@ -11,8 +11,8 @@ type Atlas struct {
 	Name    string
 	Sprites []packing.Block
 
-	DescPath  string
-	ImagePath string
+	DescFilename  string
+	ImageFilename string
 
 	Width  int
 	Height int
