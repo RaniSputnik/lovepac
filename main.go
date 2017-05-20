@@ -5,6 +5,7 @@ import (
 	"fmt"
 	_ "image/gif"
 	_ "image/jpeg"
+	"time"
 
 	"github.com/RaniSputnik/lovepac/packer"
 
@@ -41,6 +42,7 @@ func main() {
 	}
 	inputDir := args[0]
 
+	stopTimer := startTimer("Texture packing")
 	err := packer.Run(&packer.Params{
 		Name:   *pName,
 		Input:  inputDir,
@@ -49,7 +51,16 @@ func main() {
 		Width:  *pWidth,
 		Height: *pHeight,
 	})
+	stopTimer()
+
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func startTimer(name string) func() {
+	start := time.Now()
+	return func() {
+		log.Printf("%s took %s", name, time.Since(start))
 	}
 }
