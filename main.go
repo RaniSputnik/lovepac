@@ -32,12 +32,13 @@ func main() {
 	pFormat := flag.String("format", "starling", "the export format of the atlas")
 	pWidth := flag.Int("width", 2048, "maximum width of an atlas image")
 	pHeight := flag.Int("height", 2048, "maximum height of an atlas image")
-	pProfile := flag.String("cpuprofile", "", "write cpu profile to file")
+	pCPUProfile := flag.String("cpuprofile", "", "write cpu profile to file")
+	pMemprofile := flag.String("memprofile", "", "write memory profile to file")
 
 	flag.Parse()
 
-	if *pProfile != "" {
-		f, err := os.Create(*pProfile)
+	if *pCPUProfile != "" {
+		f, err := os.Create(*pCPUProfile)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -64,6 +65,16 @@ func main() {
 		Height: *pHeight,
 	})
 	stopTimer()
+
+	if *pMemprofile != "" {
+		f, err := os.Create(*pMemprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.WriteHeapProfile(f)
+		f.Close()
+		return
+	}
 
 	if err != nil {
 		log.Fatal(err)
