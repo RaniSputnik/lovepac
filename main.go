@@ -5,6 +5,7 @@ import (
 	"fmt"
 	_ "image/gif"
 	_ "image/jpeg"
+	"runtime/pprof"
 	"time"
 
 	"github.com/RaniSputnik/lovepac/packer"
@@ -31,7 +32,18 @@ func main() {
 	pFormat := flag.String("format", "starling", "the export format of the atlas")
 	pWidth := flag.Int("width", 2048, "maximum width of an atlas image")
 	pHeight := flag.Int("height", 2048, "maximum height of an atlas image")
+	pProfile := flag.String("cpuprofile", "", "write cpu profile to file")
+
 	flag.Parse()
+
+	if *pProfile != "" {
+		f, err := os.Create(*pProfile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
 	// Get the input directory
 	args := flag.Args()

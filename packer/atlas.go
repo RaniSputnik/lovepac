@@ -18,8 +18,8 @@ type Atlas struct {
 	Height int
 }
 
-func (a *Atlas) CreateImage() *image.RGBA {
-	img := image.NewRGBA(image.Rect(0, 0, a.Width, a.Height))
+func (a *Atlas) CreateImage() image.Image {
+	img := image.NewNRGBA(image.Rect(0, 0, a.Width, a.Height))
 
 	for i := range a.Sprites {
 		spr := a.Sprites[i].(*sprite)
