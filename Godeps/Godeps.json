@@ -1,0 +1,11 @@
+{
+	"ImportPath": "github.com/RaniSputnik/lovepac",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
+	"Deps": [
+		{
+			"ImportPath": "github.com/RaniSputnik/packing",
+			"Rev": "dcd60cba659143f3264197e69f51fe1ba649ef77"
+		}
+	]
+}
