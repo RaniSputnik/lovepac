@@ -5,7 +5,6 @@ import (
 	"image"
 	"image/png"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"sort"
@@ -87,18 +86,14 @@ func readDirectory(dir string) ([]packing.Block, error) {
 	for i := range sprites {
 		path := path.Join(dir, files[i].Name())
 
-		logVerbose("Reading input file '%s'", path)
-
 		reader, err := os.Open(path)
 		if err != nil {
-			logVerbose("Failed to create reader '%s'", err.Error())
 			return sprites, err
 		}
 		defer reader.Close()
 
 		img, _, err := image.Decode(reader)
 		if err != nil {
-			logVerbose("Failed to decode file '%s'", err.Error())
 			return sprites, err
 		}
 
@@ -119,7 +114,6 @@ func createImage(atlas *Atlas, outputter Outputter) error {
 
 	writer, err := outputter.GetWriter(atlas.ImageFilename)
 	if err != nil {
-		logVerbose("Failed to create image writer '%s'", err.Error())
 		return err
 	}
 	defer writer.Close()
@@ -134,16 +128,9 @@ func createImage(atlas *Atlas, outputter Outputter) error {
 func createDescriptor(t *template.Template, atlas *Atlas, outputter Outputter) error {
 	writer, err := outputter.GetWriter(atlas.DescFilename)
 	if err != nil {
-		logVerbose("Failed to create desc writer '%s'", err.Error())
 		return err
 	}
 	defer writer.Close()
 	t.Execute(writer, atlas)
 	return nil
-}
-
-func logVerbose(format string, v ...interface{}) {
-	//if *pVerbose {
-	log.Printf(format, v...)
-	//}
 }
