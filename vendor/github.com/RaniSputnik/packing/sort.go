@@ -8,9 +8,13 @@ import (
 // based on the Area of each block.
 type ByArea []Block
 
-func (a ByArea) Len() int           { return len(a) }
-func (a ByArea) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByArea) Less(i, j int) bool { return a[i].Width()*a[i].Height() > a[j].Width()*a[j].Height() }
+func (a ByArea) Len() int      { return len(a) }
+func (a ByArea) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ByArea) Less(i, j int) bool {
+	iw, ih := a[i].Size()
+	jw, jh := a[j].Size()
+	return iw*ih > jw*jh
+}
 
 // ByMaxSide implements sort interface for []Block
 // by comparing the maximum side (width or height)
@@ -20,9 +24,7 @@ type ByMaxSide []Block
 func (a ByMaxSide) Len() int      { return len(a) }
 func (a ByMaxSide) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a ByMaxSide) Less(i, j int) bool {
-	wi := float64(a[i].Width())
-	hi := float64(a[i].Height())
-	wj := float64(a[j].Width())
-	hj := float64(a[j].Height())
-	return math.Max(wi, hi) > math.Max(wj, hj)
+	wi, hi := a[i].Size()
+	wj, hj := a[j].Size()
+	return math.Max(float64(wi), float64(hi)) > math.Max(float64(wj), float64(hj))
 }

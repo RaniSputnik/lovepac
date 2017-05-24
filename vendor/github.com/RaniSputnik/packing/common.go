@@ -13,13 +13,12 @@ var ErrOutOfRoom = errors.New("out of room, could not place all blocks")
 // Block is the interface that represents a unit of space
 // that can be packed alongside other Blocks.
 //
-// Width and Height return the dimensions of the block.
+// Size returns the width and height of the block.
 //
 // Place is called by the packer to indicate that the block
 // has successfully been placed at the given position.
 type Block interface {
-	Width() int
-	Height() int
+	Size() (w int, h int)
 	Place(x int, y int)
 }
 

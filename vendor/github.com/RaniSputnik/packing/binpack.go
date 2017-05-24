@@ -8,8 +8,7 @@ func (b *BinPacker) Fit(w int, h int, blocks ...Block) error {
 	b.root = &node{x: 0, y: 0, w: w, h: h}
 
 	for _, block := range blocks {
-		bw := block.Width()
-		bh := block.Height()
+		bw, bh := block.Size()
 		if bw > b.root.w || bh > b.root.h {
 			return ErrInputTooLarge
 		}
