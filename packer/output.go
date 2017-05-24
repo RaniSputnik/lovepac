@@ -21,13 +21,11 @@ func (f OutputterFunc) GetWriter(filename string) (io.WriteCloser, error) {
 	return f(filename)
 }
 
-// FileOutputter is most common form of atlas outputter. Specify an empty
+// NewFileOutputter is most common form of atlas outputter. Specify an empty
 // output directory and it will write all atlas contents to this new directory
 // using the os standard library.
-type FileOutputter struct {
-	OutputDirectory string
-}
-
-func (f *FileOutputter) GetWriter(filename string) (io.WriteCloser, error) {
-	return os.Create(path.Join(f.OutputDirectory, filename))
+func NewFileOutputter(outputDirectory string) OutputterFunc {
+	return OutputterFunc(func(filename string) (io.WriteCloser, error) {
+		return os.Create(path.Join(outputDirectory, filename))
+	})
 }

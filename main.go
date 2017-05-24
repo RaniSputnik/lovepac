@@ -58,8 +58,8 @@ func main() {
 	stopTimer := startTimer("Texture packing")
 	err := packer.Run(&packer.Params{
 		Name:   *pName,
-		Input:  inputDir,
-		Output: &packer.FileOutputter{OutputDirectory: *pOutputDir},
+		Input:  packer.NewFileStream(inputDir),
+		Output: packer.NewFileOutputter(*pOutputDir),
 		Format: *pFormat,
 		Width:  *pWidth,
 		Height: *pHeight,

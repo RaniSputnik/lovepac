@@ -1,27 +1,30 @@
 package packer
 
 import (
+	"context"
 	"fmt"
 	"image"
 	"image/png"
-	"io/ioutil"
-	"os"
-	"path"
 	"sort"
 	"text/template"
+
+	"sync"
 
 	"github.com/RaniSputnik/packing"
 )
 
 type Params struct {
 	Name          string
-	Input         string
+	Input         AssetStreamer
 	Output        Outputter
 	Format        string
 	Width, Height int
 }
 
 func Run(params *Params) error {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
 	// Validate the parameters
 	if !FormatIsValid(params.Format) {
 		return fmt.Errorf("Format '%s' is not valid", params.Format)
@@ -29,7 +32,7 @@ func Run(params *Params) error {
 	descFormat := FormatLookup[params.Format]
 
 	// Read the images from the input directory
-	sprites, err := readDirectory(params.Input)
+	sprites, err := readAssetStream(ctx, params.Input)
 	if err != nil {
 		return err
 	}
@@ -73,40 +76,83 @@ func Run(params *Params) error {
 	return nil
 }
 
-func readDirectory(dir string) ([]packing.Block, error) {
-	files, err := ioutil.ReadDir(dir)
-	if err != nil {
+type assetDecodeResult struct {
+	Sprite *sprite
+	Err    error
+}
+
+func readAssetStream(ctx context.Context, assetStream AssetStreamer) ([]packing.Block, error) {
+	ctx, cancelCtx := context.WithCancel(ctx)
+	defer cancelCtx()
+	// Stream the input
+	assets, errc := assetStream.AssetStream(ctx)
+	// Create decoder pool
+	out := make(chan *assetDecodeResult)
+	const numDecoders = 5
+	var wg sync.WaitGroup
+	wg.Add(numDecoders)
+	for i := 0; i < numDecoders; i++ {
+		go func() {
+			decode(ctx, assets, out)
+			wg.Done()
+		}()
+	}
+	// Once all decoders complete, close the out channel
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	// Copy results from the out channel to the sprites slice
+	var sprites []packing.Block
+	for res := range out {
+		if res.Err != nil {
+			return nil, res.Err
+		}
+		sprites = append(sprites, res.Sprite)
+	}
+	// Check if the asset stream failed
+	if err := <-errc; err != nil {
 		return nil, err
 	}
 
-	// TODO filter out files that are not .png/.jpg
+	return sprites, nil
+}
 
-	sprites := make([]packing.Block, len(files))
+// Decodes assets from the in channel and publishes the results to
+// the out channel. Will continue even after errors have been discovered
+// cancel the context to interrupt early.
+func decode(ctx context.Context, in <-chan Asset, out chan<- *assetDecodeResult) {
+	publishResult := func(spr *sprite, err error) {
+		select {
+		case out <- &assetDecodeResult{spr, err}:
+		case <-ctx.Done():
+		}
+	}
 
-	for i := range sprites {
-		path := path.Join(dir, files[i].Name())
-
-		reader, err := os.Open(path)
+	for asset := range in {
+		reader, err := asset.CreateReader()
 		if err != nil {
-			return sprites, err
+			publishResult(nil, err)
+			continue
 		}
 		defer reader.Close()
 
 		img, _, err := image.Decode(reader)
 		if err != nil {
-			return sprites, err
+			publishResult(nil, err)
+			continue
 		}
 
 		rect := img.Bounds()
-		sprites[i] = &sprite{
-			path: path,
+		spr := &sprite{
+			path: asset.Asset(),
 			img:  img,
 			w:    rect.Dx(),
 			h:    rect.Dy(),
 		}
-	}
 
-	return sprites, nil
+		publishResult(spr, nil)
+	}
 }
 
 func createImage(atlas *Atlas, outputter Outputter) error {
