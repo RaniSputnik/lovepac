@@ -7,6 +7,7 @@ type BinPacker struct {
 func (b *BinPacker) Fit(w int, h int, blocks ...Block) error {
 	b.root = &node{x: 0, y: 0, w: w, h: h}
 
+	var err error
 	for _, block := range blocks {
 		bw, bh := block.Size()
 		if bw > b.root.w || bh > b.root.h {
@@ -17,11 +18,11 @@ func (b *BinPacker) Fit(w int, h int, blocks ...Block) error {
 			b.splitNode(n, bw, bh)
 			block.Place(n.x, n.y)
 		} else {
-			return ErrOutOfRoom
+			err = ErrOutOfRoom
 		}
 	}
 
-	return nil
+	return err
 }
 
 func (b *BinPacker) findNode(root *node, w int, h int) *node {
