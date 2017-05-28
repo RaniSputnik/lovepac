@@ -49,7 +49,7 @@ func (a *FileAsset) CreateReader() (io.ReadCloser, error) {
 // NewFileStream creates an asset streamer that streams files from a given
 // input directory. The input directory will be walked and readers will be
 // created using the standard os package.
-func NewFileStream(inputDirectory string) AssetStreamerFunc {
+func NewFileStream(inputDirectory string) AssetStreamer {
 	return AssetStreamerFunc(func(ctx context.Context) (<-chan Asset, <-chan error) {
 		stream := make(chan Asset)
 		errc := make(chan error, 1)
@@ -81,6 +81,20 @@ func NewFileStream(inputDirectory string) AssetStreamerFunc {
 				return nil
 			})
 		}()
+		return stream, errc
+	})
+}
+
+// NewFilenameStream creates an asset streamer that streams the specified files.
+// The files will be read relative to the given directory.
+// Readers will be created using the standard os package.
+func NewFilenameStream(directory string, files ...string) AssetStreamer {
+	return AssetStreamerFunc(func(ctx context.Context) (<-chan Asset, <-chan error) {
+		stream := make(chan Asset)
+		errc := make(chan error, 1)
+
+		// TODO stream the files
+
 		return stream, errc
 	})
 }

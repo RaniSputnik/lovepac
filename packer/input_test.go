@@ -92,3 +92,55 @@ func TestFileStreamIsCancellable(t *testing.T) {
 		t.Errorf("Expected '%s' but got '%s'", expectedErr, gotErr)
 	}
 }
+
+func TestFilenameStreamSendsAllFiles(t *testing.T) {
+	files := []string{
+		"button_active.png",
+		"button_hover.png",
+		"button.png",
+	}
+
+	expect := map[string]struct{}{
+		"button_active.png": {},
+		"button_hover.png":  {},
+		"button.png":        {},
+	}
+
+	assetStreamer := packer.NewFilenameStream("./fixtures", files...)
+	assets, errc := assetStreamer.AssetStream(context.Background())
+	results := map[string]int{}
+	resultsChan := make(chan string, len(fixtures))
+
+	go func(results chan<- string) {
+		defer close(results)
+		for asset := range assets {
+			assetName := asset.Asset()
+			if _, ok := expect[assetName]; !ok {
+				t.Errorf("Found unexpected asset named '%s'", assetName)
+			} else {
+				// No select needed because we know this
+				// channel is buffered to receive the correct
+				// number of results
+				results <- assetName
+			}
+		}
+	}(resultsChan)
+
+	if err := <-errc; err != nil {
+		t.Errorf("Expected no error, got '%s'", err)
+	}
+
+	for result := range resultsChan {
+		results[result]++
+	}
+
+	for expected := range expect {
+		n, ok := results[expected]
+		if !ok {
+			t.Errorf("Expected '%s' but was never received", expected)
+		}
+		if n > 1 {
+			t.Errorf("Expected to recieve '%s' once but was received '%d' times", expected, n)
+		}
+	}
+}
