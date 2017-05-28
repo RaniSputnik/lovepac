@@ -71,3 +71,24 @@ func TestFileStreamReportsErrorWhenDirectoryDoesNotExist(t *testing.T) {
 		t.Errorf("Expected 'directory does not exist' error but got nil")
 	}
 }
+
+func TestFileStreamIsCancellable(t *testing.T) {
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	assetStreamer := packer.NewFileStream("./fixtures")
+	assets, errc := assetStreamer.AssetStream(ctx)
+
+	cancelFunc()
+
+	go func() {
+		for asset := range assets {
+			assetName := asset.Asset()
+			// There should be no assets streamed
+			t.Errorf("Found unexpected asset named '%s'", assetName)
+		}
+	}()
+
+	expectedErr := ctx.Err()
+	if gotErr := <-errc; gotErr != expectedErr {
+		t.Errorf("Expected '%s' but got '%s'", expectedErr, gotErr)
+	}
+}
