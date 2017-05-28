@@ -1,6 +1,7 @@
 package packer
 
 import (
+	"errors"
 	"io"
 	"os"
 	"path"
@@ -24,8 +25,23 @@ func (f OutputterFunc) GetWriter(filename string) (io.WriteCloser, error) {
 // NewFileOutputter is most common form of atlas outputter. Specify an empty
 // output directory and it will write all atlas contents to this new directory
 // using the os standard library.
-func NewFileOutputter(outputDirectory string) OutputterFunc {
+func NewFileOutputter(outputDirectory string) Outputter {
 	return OutputterFunc(func(filename string) (io.WriteCloser, error) {
 		return os.Create(path.Join(outputDirectory, filename))
 	})
+}
+
+type OutputRecorder struct {
+}
+
+func (r *OutputRecorder) GetWriter(filename string) (io.WriteCloser, error) {
+	return nil, errors.New("Not Implemented")
+}
+
+func (r *OutputRecorder) Got() map[string]string {
+	return nil
+}
+
+func NewOutputRecorder() *OutputRecorder {
+	return nil
 }
