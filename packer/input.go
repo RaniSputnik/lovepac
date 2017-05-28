@@ -55,6 +55,7 @@ func NewFileStream(inputDirectory string) AssetStreamer {
 		errc := make(chan error, 1)
 		go func() {
 			defer close(stream)
+			defer close(errc)
 			// No select needed for this send, since errc is buffered.
 			errc <- filepath.Walk(inputDirectory, func(path string, info os.FileInfo, err error) error {
 				if err != nil {
@@ -93,7 +94,19 @@ func NewFilenameStream(directory string, files ...string) AssetStreamer {
 		stream := make(chan Asset)
 		errc := make(chan error, 1)
 
-		// TODO stream the files
+		go func() {
+			defer close(stream)
+			defer close(errc)
+
+			for _, file := range files {
+				select {
+				case stream <- &FileAsset{Path: file}:
+				case <-ctx.Done():
+					errc <- ctx.Err()
+					return
+				}
+			}
+		}()
 
 		return stream, errc
 	})
