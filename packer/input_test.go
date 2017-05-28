@@ -72,6 +72,9 @@ func testAssetStreamer(t *testing.T, assetStream packer.AssetStreamer, expect ma
 	t.Run("Asset streamer is cancellable", func(t *testing.T) {
 		testAssetStreamerIsCancellable(t, assetStream)
 	})
+	t.Run("Asset streamer reports nil context", func(t *testing.T) {
+		testAssetStreamerReportsNilContext(t, assetStream)
+	})
 }
 
 func testAssetStreamerSendsAllFiles(t *testing.T, assetStream packer.AssetStreamer, expect map[string]struct{}) {
@@ -128,5 +131,19 @@ func testAssetStreamerIsCancellable(t *testing.T, assetStream packer.AssetStream
 	expectedErr := ctx.Err()
 	if gotErr := <-errc; gotErr != expectedErr {
 		t.Errorf("Expected '%s' but got '%s'", expectedErr, gotErr)
+	}
+}
+
+func testAssetStreamerReportsNilContext(t *testing.T, assetStream packer.AssetStreamer) {
+	assets, errc := assetStream.AssetStream(nil)
+
+	go func() {
+		for _ = range assets {
+			/* do nothing */
+		}
+	}()
+
+	if err := <-errc; err == nil {
+		t.Errorf("Expected 'context nil' error but got nil")
 	}
 }
