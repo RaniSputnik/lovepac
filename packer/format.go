@@ -1,7 +1,7 @@
 package packer
 
 import (
-	"fmt"
+	"errors"
 	"text/template"
 
 	"github.com/RaniSputnik/lovepac/templates"
@@ -16,6 +16,8 @@ const (
 	FormatStarling = "starling"
 	FormatLove     = "love"
 )
+
+var ErrFormatIsInvalid = errors.New("Format is not valid")
 
 var formatLookup = map[string]*Format{
 	FormatStarling: &Format{Template: templates.Starling, Ext: "xml"},
