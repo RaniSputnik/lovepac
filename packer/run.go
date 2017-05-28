@@ -17,8 +17,17 @@ var (
 	// DefaultAtlasName is the default base name for
 	// outputted files when no name is provided
 	DefaultAtlasName = "atlas"
+	// DefaultFormatName is the default format used
+	// if no format is specified
+	DefaultFormatName = FormatLove
+	// DefaultAtlasWidth is the width used if no width is specified
+	DefaultAtlasWidth = 2048
+	// DefaultAtlasHeight is the height used if no height is specified
+	DefaultAtlasHeight = 2048
 )
 
+// Params are provided to the Run method to configure
+// the texture packing output.
 type Params struct {
 	Name          string
 	Input         AssetStreamer
@@ -27,9 +36,32 @@ type Params struct {
 	Width, Height int
 }
 
+// ApplySensibleDefaults will fill in nil values with values
+// from the list of defaults. The Run method will do this
+// automatically, there is no need to run this manually in
+// most circumstances.
+func (p *Params) ApplySensibleDefaults() {
+	if p.Name == "" {
+		p.Name = DefaultAtlasName
+	}
+	if p.Format == "" {
+		p.Format = DefaultFormatName
+	}
+	if p.Width == 0 {
+		p.Width = DefaultAtlasWidth
+	}
+	if p.Height == 0 {
+		p.Height = DefaultAtlasHeight
+	}
+}
+
+// Run performs the texture packing. It reads files from the given
+// AssetStreamer and outputs the results to the given Outputter
+// returning an error if any critical failures are encountered.
 func Run(params *Params) error {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
+	params.ApplySensibleDefaults()
 
 	// Get the output format
 	descFormat, err := GetFormatNamed(params.Format)

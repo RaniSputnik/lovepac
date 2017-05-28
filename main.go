@@ -29,9 +29,9 @@ func main() {
 	pName := flag.String("name", packer.DefaultAtlasName, "the base name of the output images and data files")
 	pOutputDir := flag.String("out", "", "the directory to output the result to")
 	pVerbose = flag.Bool("v", false, "use verbose logging")
-	pFormat := flag.String("format", "starling", "the export format of the atlas")
-	pWidth := flag.Int("width", 2048, "maximum width of an atlas image")
-	pHeight := flag.Int("height", 2048, "maximum height of an atlas image")
+	pFormat := flag.String("format", packer.DefaultFormatName, "the export format of the atlas")
+	pWidth := flag.Int("width", packer.DefaultAtlasWidth, "maximum width of an atlas image")
+	pHeight := flag.Int("height", packer.DefaultAtlasHeight, "maximum height of an atlas image")
 	pCPUProfile := flag.String("cpuprofile", "", "write cpu profile to file")
 	pMemprofile := flag.String("memprofile", "", "write memory profile to file")
 
