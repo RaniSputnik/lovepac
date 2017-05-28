@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"sync"
+
 	"github.com/RaniSputnik/lovepac/packer"
 )
 
@@ -59,17 +61,22 @@ func TestFileStreamReportsErrorWhenDirectoryDoesNotExist(t *testing.T) {
 	assetStreamer := packer.NewFileStream("./doesnotexist")
 	assets, errc := assetStreamer.AssetStream(context.Background())
 
+	wg := sync.WaitGroup{}
+	wg.Add(1)
 	go func() {
 		for asset := range assets {
 			assetName := asset.Asset()
 			// There should be no assets streamed
 			t.Errorf("Found unexpected asset named '%s'", assetName)
 		}
+		wg.Done()
 	}()
 
 	if err := <-errc; err == nil {
 		t.Errorf("Expected 'directory does not exist' error but got nil")
 	}
+
+	wg.Wait()
 }
 
 func TestFileStreamIsCancellable(t *testing.T) {
@@ -80,10 +87,8 @@ func TestFileStreamIsCancellable(t *testing.T) {
 	cancelFunc()
 
 	go func() {
-		for asset := range assets {
-			assetName := asset.Asset()
-			// There should be no assets streamed
-			t.Errorf("Found unexpected asset named '%s'", assetName)
+		for _ = range assets {
+			/* do nothing */
 		}
 	}()
 
