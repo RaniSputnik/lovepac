@@ -80,22 +80,8 @@ func TestFileStreamReportsErrorWhenDirectoryDoesNotExist(t *testing.T) {
 }
 
 func TestFileStreamIsCancellable(t *testing.T) {
-	ctx, cancelFunc := context.WithCancel(context.Background())
 	assetStreamer := packer.NewFileStream("./fixtures")
-	assets, errc := assetStreamer.AssetStream(ctx)
-
-	cancelFunc()
-
-	go func() {
-		for _ = range assets {
-			/* do nothing */
-		}
-	}()
-
-	expectedErr := ctx.Err()
-	if gotErr := <-errc; gotErr != expectedErr {
-		t.Errorf("Expected '%s' but got '%s'", expectedErr, gotErr)
-	}
+	testAssetStreamerIsCancellable(t, assetStreamer)
 }
 
 func TestFilenameStreamSendsAllFiles(t *testing.T) {
@@ -151,15 +137,16 @@ func TestFilenameStreamSendsAllFiles(t *testing.T) {
 }
 
 func TestFilenameStreamIsCancellable(t *testing.T) {
-	files := []string{
-		"button_active.png",
-		"button_hover.png",
-		"button.png",
-	}
+	assetStreamer := packer.NewFilenameStream("./fixtures", "button_active.png", "button_hover.png", "button.png")
+	testAssetStreamerIsCancellable(t, assetStreamer)
+}
 
+// Common AssetStreamer test suite //
+// ******************************* //
+
+func testAssetStreamerIsCancellable(t *testing.T, assetStream packer.AssetStreamer) {
 	ctx, cancelFunc := context.WithCancel(context.Background())
-	assetStreamer := packer.NewFilenameStream("./fixtures", files...)
-	assets, errc := assetStreamer.AssetStream(ctx)
+	assets, errc := assetStream.AssetStream(ctx)
 
 	cancelFunc()
 
