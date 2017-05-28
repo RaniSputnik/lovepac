@@ -1,7 +1,7 @@
 package packer
 
 import (
-	"errors"
+	"bytes"
 	"io"
 	"os"
 	"path"
@@ -32,16 +32,29 @@ func NewFileOutputter(outputDirectory string) Outputter {
 }
 
 type OutputRecorder struct {
+	writers map[string]*bufferWithClose
 }
 
+type bufferWithClose struct {
+	*bytes.Buffer
+}
+
+func (b *bufferWithClose) Close() error { return nil }
+
 func (r *OutputRecorder) GetWriter(filename string) (io.WriteCloser, error) {
-	return nil, errors.New("Not Implemented")
+	buffer := &bufferWithClose{bytes.NewBufferString("")}
+	r.writers[filename] = buffer
+	return buffer, nil
 }
 
 func (r *OutputRecorder) Got() map[string]string {
-	return nil
+	results := map[string]string{}
+	for key, val := range r.writers {
+		results[key] = val.String()
+	}
+	return results
 }
 
 func NewOutputRecorder() *OutputRecorder {
-	return nil
+	return &OutputRecorder{map[string]*bufferWithClose{}}
 }
