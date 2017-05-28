@@ -83,3 +83,37 @@ func TestRunWithoutParamsSpecifiedUsesSensibleDefaults(t *testing.T) {
 		}
 	}
 }
+
+func TestRunWithNilParamsResultsInError(t *testing.T) {
+	emptyParams := &packer.Params{}
+	var err error
+
+	err = packer.Run(nil, nil)
+	if err == nil {
+		t.Errorf("Expected run with nil context and params to fail with error but did not get an error")
+	}
+
+	err = packer.Run(nil, emptyParams)
+	if err == nil {
+		t.Errorf("Expected run with nil context to fail with error but but did not get an error")
+	}
+
+	err = packer.Run(context.Background(), emptyParams)
+	if err == nil {
+		t.Errorf("Expected run with nil input and output to fail with error but but did not get an error")
+	}
+
+	err = packer.Run(context.Background(), &packer.Params{
+		Input: packer.NewFilenameStream("./fixtures", "button.png"),
+	})
+	if err == nil {
+		t.Errorf("Expected run with nil output to fail with error but but did not get an error")
+	}
+
+	err = packer.Run(context.Background(), &packer.Params{
+		Output: packer.NewFileOutputter("./doesntmatter"),
+	})
+	if err == nil {
+		t.Errorf("Expected run with nil input to fail with error but but did not get an error")
+	}
+}
