@@ -2,6 +2,7 @@ package packer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"image"
 	"image/png"
@@ -55,13 +56,34 @@ func (p *Params) ApplySensibleDefaults() {
 	}
 }
 
+func (p *Params) Validate() error {
+	if p.Input == nil {
+		return errors.New("Input must not be nil")
+	}
+	if p.Output == nil {
+		return errors.New("Output must not be nil")
+	}
+	return nil
+}
+
 // Run performs the texture packing. It reads files from the given
 // AssetStreamer and outputs the results to the given Outputter
 // returning an error if any critical failures are encountered.
 func Run(ctx context.Context, params *Params) error {
+	if ctx == nil {
+		return errors.New("Context must not be nil")
+	}
+	if params == nil {
+		return errors.New("Params must not be nil")
+	}
+
 	ctx, cancelCtx := context.WithCancel(ctx)
 	defer cancelCtx()
+
 	params.ApplySensibleDefaults()
+	if err := params.Validate(); err != nil {
+		return err
+	}
 
 	// Get the output format
 	descFormat, err := GetFormatNamed(params.Format)
