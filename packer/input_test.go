@@ -9,7 +9,7 @@ import (
 	"github.com/RaniSputnik/lovepac/packer"
 )
 
-func TestFileStreamSendsAllFiles(t *testing.T) {
+func TestFileStream(t *testing.T) {
 	var fixtures = map[string]struct{}{
 		"button_active.png":  {},
 		"button_hover.png":   {},
@@ -19,37 +19,33 @@ func TestFileStreamSendsAllFiles(t *testing.T) {
 	}
 
 	assetStreamer := packer.NewFileStream("./fixtures")
-	testAssetStreamerSendsAllFiles(t, assetStreamer, fixtures)
-}
+	testAssetStreamer(t, assetStreamer, fixtures)
 
-func TestFileStreamReportsErrorWhenDirectoryDoesNotExist(t *testing.T) {
-	assetStreamer := packer.NewFileStream("./doesnotexist")
-	assets, errc := assetStreamer.AssetStream(context.Background())
+	// Additional tests
+	t.Run("Asset streamer reports when directory does not exist", func(t *testing.T) {
+		assetStreamer := packer.NewFileStream("./doesnotexist")
+		assets, errc := assetStreamer.AssetStream(context.Background())
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		for asset := range assets {
-			assetName := asset.Asset()
-			// There should be no assets streamed
-			t.Errorf("Found unexpected asset named '%s'", assetName)
+		wg := sync.WaitGroup{}
+		wg.Add(1)
+		go func() {
+			for asset := range assets {
+				assetName := asset.Asset()
+				// There should be no assets streamed
+				t.Errorf("Found unexpected asset named '%s'", assetName)
+			}
+			wg.Done()
+		}()
+
+		if err := <-errc; err == nil {
+			t.Errorf("Expected 'directory does not exist' error but got nil")
 		}
-		wg.Done()
-	}()
 
-	if err := <-errc; err == nil {
-		t.Errorf("Expected 'directory does not exist' error but got nil")
-	}
-
-	wg.Wait()
+		wg.Wait()
+	})
 }
 
-func TestFileStreamIsCancellable(t *testing.T) {
-	assetStreamer := packer.NewFileStream("./fixtures")
-	testAssetStreamerIsCancellable(t, assetStreamer)
-}
-
-func TestFilenameStreamSendsAllFiles(t *testing.T) {
+func TestFilenameStream(t *testing.T) {
 	files := []string{
 		"button_active.png",
 		"button_hover.png",
@@ -63,16 +59,20 @@ func TestFilenameStreamSendsAllFiles(t *testing.T) {
 	}
 
 	assetStreamer := packer.NewFilenameStream("./fixtures", files...)
-	testAssetStreamerSendsAllFiles(t, assetStreamer, expect)
-}
-
-func TestFilenameStreamIsCancellable(t *testing.T) {
-	assetStreamer := packer.NewFilenameStream("./fixtures", "button_active.png", "button_hover.png", "button.png")
-	testAssetStreamerIsCancellable(t, assetStreamer)
+	testAssetStreamer(t, assetStreamer, expect)
 }
 
 // Common AssetStreamer test suite //
 // ******************************* //
+
+func testAssetStreamer(t *testing.T, assetStream packer.AssetStreamer, expect map[string]struct{}) {
+	t.Run("Asset streamer sends all files", func(t *testing.T) {
+		testAssetStreamerSendsAllFiles(t, assetStream, expect)
+	})
+	t.Run("Asset streamer is cancellable", func(t *testing.T) {
+		testAssetStreamerIsCancellable(t, assetStream)
+	})
+}
 
 func testAssetStreamerSendsAllFiles(t *testing.T, assetStream packer.AssetStreamer, expect map[string]struct{}) {
 	assets, errc := assetStream.AssetStream(context.Background())
