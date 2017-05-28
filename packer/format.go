@@ -31,7 +31,7 @@ func FormatIsValid(format string) bool {
 
 func GetFormatNamed(format string) (*Format, error) {
 	if !FormatIsValid(format) {
-		return nil, fmt.Errorf("Format '%s' is not valid", format)
+		return nil, ErrFormatIsInvalid
 	}
 	return formatLookup[format], nil
 }
