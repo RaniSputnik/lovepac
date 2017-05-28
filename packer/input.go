@@ -67,8 +67,14 @@ func NewFileStream(inputDirectory string) AssetStreamerFunc {
 				if !info.Mode().IsRegular() {
 					return nil
 				}
+
+				relPath, err := filepath.Rel(inputDirectory, path)
+				if err != nil {
+					return err
+				}
+
 				select {
-				case stream <- &FileAsset{Path: path}:
+				case stream <- &FileAsset{Path: relPath}:
 				case <-ctx.Done():
 					return ctx.Err()
 				}
