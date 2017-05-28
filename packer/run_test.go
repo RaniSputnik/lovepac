@@ -1,8 +1,12 @@
 package packer_test
 
-import "testing"
-import "github.com/RaniSputnik/lovepac/packer"
-import "fmt"
+import (
+	"context"
+	"fmt"
+	"testing"
+
+	"github.com/RaniSputnik/lovepac/packer"
+)
 
 func TestRunOutputsAtlasAndDescriptor(t *testing.T) {
 	files := []string{
@@ -27,7 +31,7 @@ func TestRunOutputsAtlasAndDescriptor(t *testing.T) {
 		Height: 1024,
 	}
 
-	err := packer.Run(params)
+	err := packer.Run(context.Background(), params)
 	got := outputRecorder.Got()
 
 	if err != nil {
@@ -60,7 +64,7 @@ func TestRunWithoutParamsSpecifiedUsesSensibleDefaults(t *testing.T) {
 		Output: outputRecorder,
 	}
 
-	err := packer.Run(params)
+	err := packer.Run(context.Background(), params)
 	got := outputRecorder.Got()
 
 	if err != nil {

@@ -58,8 +58,8 @@ func (p *Params) ApplySensibleDefaults() {
 // Run performs the texture packing. It reads files from the given
 // AssetStreamer and outputs the results to the given Outputter
 // returning an error if any critical failures are encountered.
-func Run(params *Params) error {
-	ctx, cancelCtx := context.WithCancel(context.Background())
+func Run(ctx context.Context, params *Params) error {
+	ctx, cancelCtx := context.WithCancel(ctx)
 	defer cancelCtx()
 	params.ApplySensibleDefaults()
 

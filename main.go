@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	_ "image/gif"
@@ -56,7 +57,7 @@ func main() {
 	inputDir := args[0]
 
 	stopTimer := startTimer("Texture packing")
-	err := packer.Run(&packer.Params{
+	err := packer.Run(context.Background(), &packer.Params{
 		Name:   *pName,
 		Input:  packer.NewFileStream(inputDir),
 		Output: packer.NewFileOutputter(*pOutputDir),
