@@ -15,7 +15,7 @@ var fixtures = map[string]struct{}{
 	"character_hero.png": {},
 }
 
-func TestStreamSendsAllFiles(t *testing.T) {
+func TestFileStreamSendsAllFiles(t *testing.T) {
 	assetStreamer := packer.NewFileStream("./fixtures")
 	assets, errc := assetStreamer.AssetStream(context.Background())
 	results := map[string]int{}
@@ -55,4 +55,19 @@ func TestStreamSendsAllFiles(t *testing.T) {
 	}
 }
 
-// TODO test file stream reports error when directory does not exist
+func TestFileStreamReportsErrorWhenDirectoryDoesNotExist(t *testing.T) {
+	assetStreamer := packer.NewFileStream("./doesnotexist")
+	assets, errc := assetStreamer.AssetStream(context.Background())
+
+	go func() {
+		for asset := range assets {
+			assetName := asset.Asset()
+			// There should be no assets streamed
+			t.Errorf("Found unexpected asset named '%s'", assetName)
+		}
+	}()
+
+	if err := <-errc; err == nil {
+		t.Errorf("Expected 'directory does not exist' error but got nil")
+	}
+}
