@@ -99,12 +99,7 @@ func NewFilenameStream(directory string, files ...string) AssetStreamer {
 			defer close(errc)
 
 			for _, file := range files {
-				select {
-				case stream <- &FileAsset{Path: file}:
-				case <-ctx.Done():
-					errc <- ctx.Err()
-					return
-				}
+				stream <- &FileAsset{Path: file}
 			}
 		}()
 

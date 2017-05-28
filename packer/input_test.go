@@ -149,3 +149,28 @@ func TestFilenameStreamSendsAllFiles(t *testing.T) {
 		}
 	}
 }
+
+func TestFilenameStreamIsCancellable(t *testing.T) {
+	files := []string{
+		"button_active.png",
+		"button_hover.png",
+		"button.png",
+	}
+
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	assetStreamer := packer.NewFilenameStream("./fixtures", files...)
+	assets, errc := assetStreamer.AssetStream(ctx)
+
+	cancelFunc()
+
+	go func() {
+		for _ = range assets {
+			/* do nothing */
+		}
+	}()
+
+	expectedErr := ctx.Err()
+	if gotErr := <-errc; gotErr != expectedErr {
+		t.Errorf("Expected '%s' but got '%s'", expectedErr, gotErr)
+	}
+}
