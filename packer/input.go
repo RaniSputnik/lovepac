@@ -2,6 +2,7 @@ package packer
 
 import (
 	"context"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -46,6 +47,8 @@ func (a *FileAsset) CreateReader() (io.ReadCloser, error) {
 	return os.Open(a.Path)
 }
 
+var errContextNil = errors.New("Context must not be nil")
+
 // NewFileStream creates an asset streamer that streams files from a given
 // input directory. The input directory will be walked and readers will be
 // created using the standard os package.
@@ -56,6 +59,12 @@ func NewFileStream(inputDirectory string) AssetStreamer {
 		go func() {
 			defer close(stream)
 			defer close(errc)
+
+			if ctx == nil {
+				errc <- errContextNil
+				return
+			}
+
 			// No select needed for this send, since errc is buffered.
 			errc <- filepath.Walk(inputDirectory, func(path string, info os.FileInfo, err error) error {
 				if err != nil {
@@ -97,6 +106,11 @@ func NewFilenameStream(directory string, files ...string) AssetStreamer {
 		go func() {
 			defer close(stream)
 			defer close(errc)
+
+			if ctx == nil {
+				errc <- errContextNil
+				return
+			}
 
 			for _, file := range files {
 				select {
