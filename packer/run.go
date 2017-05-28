@@ -13,6 +13,12 @@ import (
 	"github.com/RaniSputnik/packing"
 )
 
+var (
+	// DefaultAtlasName is the default base name for
+	// outputted files when no name is provided
+	DefaultAtlasName = "atlas"
+)
+
 type Params struct {
 	Name          string
 	Input         AssetStreamer

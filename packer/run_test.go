@@ -2,6 +2,7 @@ package packer_test
 
 import "testing"
 import "github.com/RaniSputnik/lovepac/packer"
+import "fmt"
 
 func TestRunOutputsAtlasAndDescriptor(t *testing.T) {
 	files := []string{
@@ -24,6 +25,39 @@ func TestRunOutputsAtlasAndDescriptor(t *testing.T) {
 		Output: outputRecorder,
 		Width:  1024,
 		Height: 1024,
+	}
+
+	err := packer.Run(params)
+	got := outputRecorder.Got()
+
+	if err != nil {
+		t.Errorf("Expected run to succeed without error but got '%s'", err)
+	}
+
+	for gotFile := range got {
+		if _, ok := expected[gotFile]; !ok {
+			t.Errorf("Got unexpected file '%s'", gotFile)
+		}
+	}
+
+	for expect := range expected {
+		if _, ok := got[expect]; !ok {
+			t.Errorf("Expected file '%s' to be outputted", expect)
+		}
+	}
+}
+
+func TestRunWithoutParamsSpecifiedUsesSensibleDefaults(t *testing.T) {
+	files := []string{"button.png"}
+	expected := map[string]string{
+		fmt.Sprintf("%s-1.png", packer.DefaultAtlasName): "",
+		fmt.Sprintf("%s-1.lua", packer.DefaultAtlasName): "",
+	}
+
+	outputRecorder := packer.NewOutputRecorder()
+	params := &packer.Params{
+		Input:  packer.NewFilenameStream("./fixtures", files...),
+		Output: outputRecorder,
 	}
 
 	err := packer.Run(params)

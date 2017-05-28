@@ -26,7 +26,7 @@ func main() {
 	}
 
 	// Set and parse the command line arguments
-	pName := flag.String("name", "atlas", "the base name of the output images and data files")
+	pName := flag.String("name", packer.DefaultAtlasName, "the base name of the output images and data files")
 	pOutputDir := flag.String("out", "", "the directory to output the result to")
 	pVerbose = flag.Bool("v", false, "use verbose logging")
 	pFormat := flag.String("format", "starling", "the export format of the atlas")
