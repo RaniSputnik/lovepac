@@ -25,11 +25,11 @@ func Run(params *Params) error {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	// Validate the parameters
-	if !FormatIsValid(params.Format) {
-		return fmt.Errorf("Format '%s' is not valid", params.Format)
+	// Get the output format
+	descFormat, err := GetFormatNamed(params.Format)
+	if err != nil {
+		return err
 	}
-	descFormat := FormatLookup[params.Format]
 
 	// Read the images from the input directory
 	sprites, err := readAssetStream(ctx, params.Input)
