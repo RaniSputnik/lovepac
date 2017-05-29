@@ -102,12 +102,12 @@ func Run(ctx context.Context, params *Params) error {
 	totalNumberOfAtlases := 0
 	wg := &sync.WaitGroup{}
 	errc := make(chan error)
+	sort.Sort(packing.ByArea(sprites))
 
 	// TODO turn refactor these steps into pipeline
 	for {
 		// Arrange the images into the atlas space
 		packer := &packing.BinPacker{}
-		sort.Sort(packing.ByArea(sprites))
 		err = packer.Fit(params.Width, params.Height, sprites...)
 		if err == packing.ErrInputTooLarge {
 			return err
