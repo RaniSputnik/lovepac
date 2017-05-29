@@ -37,11 +37,9 @@ type Params struct {
 	Width, Height int
 }
 
-// ApplySensibleDefaults will fill in nil values with values
-// from the list of defaults. The Run method will do this
-// automatically, there is no need to run this manually in
-// most circumstances.
-func (p *Params) ApplySensibleDefaults() {
+// applySensibleDefaults will fill in nil values with values
+// from the list of defaults.
+func (p *Params) applySensibleDefaults() {
 	if p.Name == "" {
 		p.Name = DefaultAtlasName
 	}
@@ -56,7 +54,9 @@ func (p *Params) ApplySensibleDefaults() {
 	}
 }
 
-func (p *Params) Validate() error {
+// ensureRequiredParametersArePresent tests the parameters for
+// a non-nil input method and a non-nil output method.
+func (p *Params) validateRequiredParameters() error {
 	if p.Input == nil {
 		return errors.New("Input must not be nil")
 	}
@@ -80,10 +80,11 @@ func Run(ctx context.Context, params *Params) error {
 	ctx, cancelCtx := context.WithCancel(ctx)
 	defer cancelCtx()
 
-	params.ApplySensibleDefaults()
-	if err := params.Validate(); err != nil {
+	// Validate the parameters
+	if err := params.validateRequiredParameters(); err != nil {
 		return err
 	}
+	params.applySensibleDefaults()
 
 	// Get the output format
 	descFormat, err := GetFormatNamed(params.Format)
