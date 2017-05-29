@@ -98,27 +98,58 @@ func Run(ctx context.Context, params *Params) error {
 		return err
 	}
 
-	// Arrange the images into the atlas space
-	packer := &packing.BinPacker{}
-	sort.Sort(packing.ByArea(sprites))
-	err = packer.Fit(params.Width, params.Height, sprites...)
-	if err != nil {
-		return err
+	var atlases []*Atlas
+	totalNumberOfSprites := len(sprites)
+
+	for {
+		// Arrange the images into the atlas space
+		packer := &packing.BinPacker{}
+		sort.Sort(packing.ByArea(sprites))
+		err = packer.Fit(params.Width, params.Height, sprites...)
+		if err == packing.ErrInputTooLarge {
+			return err
+		}
+
+		// TODO I think we could reuse this rather than
+		// reallocating each run through the loop
+		completedSprites := make([]packing.Block, 0, totalNumberOfSprites)
+		incompleteSprites := make([]packing.Block, 0, totalNumberOfSprites)
+		for _, block := range sprites {
+			sprite := block.(*sprite)
+			if sprite.placed {
+				completedSprites = append(completedSprites, sprite)
+			} else {
+				incompleteSprites = append(incompleteSprites, sprite)
+			}
+		}
+
+		atlasIndex := len(atlases) + 1
+		atlasName := fmt.Sprintf("%s-%d", params.Name, atlasIndex)
+		atlas := &Atlas{
+			Name:         atlasName,
+			Sprites:      completedSprites,
+			DescFilename: fmt.Sprintf("%s.%s", atlasName, descFormat.Ext),
+			// TODO add image type parameter
+			ImageFilename: fmt.Sprintf("%s.%s", atlasName, "png"),
+			Width:         params.Width,
+			Height:        params.Height,
+		}
+		atlases = append(atlases, atlas)
+
+		totalNumberOfIncompletedSprites := len(incompleteSprites)
+		// If there are no more sprites that are incomplete, we are done!
+		if totalNumberOfIncompletedSprites == 0 {
+			break
+		}
+		// If we don't make any progress, then we've failed
+		if totalNumberOfIncompletedSprites == totalNumberOfSprites {
+			return packing.ErrOutOfRoom
+		}
+		// Otherwise continue
+		sprites = incompleteSprites
 	}
 
-	// TODO dynamically adjust number of atlases
-	atlases := make([]*Atlas, 1)
-	atlasName := fmt.Sprintf("%s-%d", params.Name, 1)
-	atlases[0] = &Atlas{
-		Name:         atlasName,
-		Sprites:      sprites,
-		DescFilename: fmt.Sprintf("%s.%s", atlasName, descFormat.Ext),
-		// TODO add image type parameter
-		ImageFilename: fmt.Sprintf("%s.%s", atlasName, "png"),
-		Width:         params.Width,
-		Height:        params.Height,
-	}
-
+	// TODO we should start this step above, as soon as the atlas is generated
 	// TODO should be able to execute all atlases concurrently
 	// TODO should write descriptor and image concurrently
 	for _, atlas := range atlases {
