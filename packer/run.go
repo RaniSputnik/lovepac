@@ -98,9 +98,12 @@ func Run(ctx context.Context, params *Params) error {
 		return err
 	}
 
-	var atlases []*Atlas
 	totalNumberOfSprites := len(sprites)
+	totalNumberOfAtlases := 0
+	wg := &sync.WaitGroup{}
+	errc := make(chan error)
 
+	// TODO turn refactor these steps into pipeline
 	for {
 		// Arrange the images into the atlas space
 		packer := &packing.BinPacker{}
@@ -123,8 +126,8 @@ func Run(ctx context.Context, params *Params) error {
 			}
 		}
 
-		atlasIndex := len(atlases) + 1
-		atlasName := fmt.Sprintf("%s-%d", params.Name, atlasIndex)
+		totalNumberOfAtlases++
+		atlasName := fmt.Sprintf("%s-%d", params.Name, totalNumberOfAtlases)
 		atlas := &Atlas{
 			Name:         atlasName,
 			Sprites:      completedSprites,
@@ -134,7 +137,25 @@ func Run(ctx context.Context, params *Params) error {
 			Width:         params.Width,
 			Height:        params.Height,
 		}
-		atlases = append(atlases, atlas)
+		wg.Add(2)
+
+		go func(ctx context.Context, errc chan<- error, wg *sync.WaitGroup) {
+			// Create and write the resulting image
+			select {
+			case errc <- createImage(atlas, params.Output):
+			case <-ctx.Done():
+			}
+			wg.Done()
+		}(ctx, errc, wg)
+
+		go func(ctx context.Context, errc chan<- error, wg *sync.WaitGroup) {
+			// Create and write the file that describes the image
+			select {
+			case errc <- createDescriptor(descFormat.Template, atlas, params.Output):
+			case <-ctx.Done():
+			}
+			wg.Done()
+		}(ctx, errc, wg)
 
 		totalNumberOfIncompletedSprites := len(incompleteSprites)
 		// If there are no more sprites that are incomplete, we are done!
@@ -149,17 +170,12 @@ func Run(ctx context.Context, params *Params) error {
 		sprites = incompleteSprites
 	}
 
-	// TODO we should start this step above, as soon as the atlas is generated
-	// TODO should be able to execute all atlases concurrently
-	// TODO should write descriptor and image concurrently
-	for _, atlas := range atlases {
-		// Create and write the resulting image
-		err = createImage(atlas, params.Output)
-		if err != nil {
-			return err
-		}
-		// Create and write the file that describes the image
-		err = createDescriptor(descFormat.Template, atlas, params.Output)
+	go func() {
+		wg.Wait()
+		close(errc)
+	}()
+
+	for err := range errc {
 		if err != nil {
 			return err
 		}
