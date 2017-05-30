@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"strings"
+
 	"github.com/RaniSputnik/lovepac/packer"
 )
 
@@ -189,4 +191,45 @@ func TestRunWithTooManyFilesAndMaxAtlasesResultsInError(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected run to fail but error was nil")
 	}
+}
+
+func TestPaddingIsAppliedCorrectly(t *testing.T) {
+	button := "button.png"
+	buttonWidth, buttonHeight := 124, 50
+	padding := 2
+
+	outputRecorder := packer.NewOutputRecorder()
+	params := &packer.Params{
+		Input:   packer.NewFilenameStream("./fixtures", button),
+		Output:  outputRecorder,
+		Name:    "atlas",
+		Format:  packer.FormatLove,
+		Padding: padding,
+	}
+
+	err := packer.Run(context.Background(), params)
+	got := outputRecorder.Got()
+
+	if err != nil {
+		t.Errorf("Expected run to succeed without error but got '%s'", err)
+	}
+
+	expectedString := fmt.Sprintf("quads['button'] = love.graphics.newQuad(%d,%d,%d,%d,%d,%d)",
+		padding, padding, buttonWidth, buttonHeight, packer.DefaultAtlasWidth, packer.DefaultAtlasHeight)
+	seperator := createUnderlineString(expectedString)
+	gotStr := got["atlas-1.lua"].String()
+	if !strings.Contains(gotStr, expectedString) {
+		t.Errorf("Expected descriptor to contain the following sub-string\n\n%s\n%s\n\n%s", expectedString, seperator, gotStr)
+	}
+
+	// TODO do we want to ensure the image was placed correctly too?
+}
+
+func createUnderlineString(input string) string {
+	inputLength := len(input)
+	chars := make([]rune, inputLength)
+	for i := 0; i < inputLength; i++ {
+		chars[i] = '~'
+	}
+	return string(chars)
 }

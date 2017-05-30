@@ -58,6 +58,7 @@ type Params struct {
 	Format        string
 	Width, Height int
 	MaxAtlases    int
+	Padding       int
 }
 
 // applySensibleDefaults will fill in nil values with values

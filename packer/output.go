@@ -51,11 +51,11 @@ func (r *OutputRecorder) GetWriter(filename string) (io.WriteCloser, error) {
 	return buffer, nil
 }
 
-func (r *OutputRecorder) Got() map[string]string {
+func (r *OutputRecorder) Got() map[string]*bytes.Buffer {
 	r.Lock()
-	results := map[string]string{}
+	results := map[string]*bytes.Buffer{}
 	for key, val := range r.writers {
-		results[key] = val.String()
+		results[key] = val.Buffer
 	}
 	r.Unlock()
 	return results
