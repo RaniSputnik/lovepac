@@ -26,7 +26,31 @@ var (
 )
 
 // Params are provided to the Run method to configure
-// the texture packing output.
+// the texture packing output. Input and Ouput parameters are required
+// all other parameters are optional. You can use the public
+// 'Default' properties to configure the defaults used when parameters
+// are missing.
+//
+// Name is the name that will be prepended to the atlas files
+// outputted. Eg. a value of "myatlas" would result in "myatlas-1.png"
+//
+// Input is used to provide readers for the assets that will be packed.
+// In most cases packer.NewFileStream can be used to read from the local
+// filesystem, but you could write an input that reads from a server, network
+// etc. Input is a required parameter.
+//
+// Output is used to provide writers for the atlas files to be written.
+// In most cases packer.NewFileOutputter will suffice. Output is a required
+// parameter.
+//
+// Format should be a string referencing one of the previously registered
+// atlas descriptor formats.
+//
+// Width and Height configure the maximum size of the atlases outputted.
+// TODO 0 should be interpreted as no maxumum size.
+//
+// MaxAtlases can be used to limit the number of atlases outputted. A value
+// of 0 is interpreted as no limit.
 type Params struct {
 	Name          string
 	Input         AssetStreamer
@@ -96,15 +120,15 @@ func Run(ctx context.Context, params *Params) error {
 	if err != nil {
 		return err
 	}
+	// TODO allow sorting algorithm to be specified
+	sort.Sort(packing.ByArea(sprites))
 
 	totalNumberOfSprites := len(sprites)
 	totalNumberOfAtlases := 0
-	wg := &sync.WaitGroup{}
-	errc := make(chan error)
-	sort.Sort(packing.ByArea(sprites))
-
 	completedSprites := make([]packing.Block, 0, totalNumberOfSprites)
 	incompleteSprites := make([]packing.Block, 0, totalNumberOfSprites)
+	wg := &sync.WaitGroup{}
+	errc := make(chan error)
 	for {
 		// Return error if maxAtlases param exceeded
 		if params.MaxAtlases > 0 && totalNumberOfAtlases == params.MaxAtlases {
