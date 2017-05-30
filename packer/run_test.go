@@ -225,6 +225,25 @@ func TestPaddingIsAppliedCorrectly(t *testing.T) {
 	// TODO do we want to ensure the image was placed correctly too?
 }
 
+func TestAssetsDoNotFitIfPaddingCannotBeApplied(t *testing.T) {
+	button := "button.png"
+	buttonWidth, buttonHeight := 124, 50
+
+	outputRecorder := packer.NewOutputRecorder()
+	params := &packer.Params{
+		Input:   packer.NewFilenameStream("./fixtures", button),
+		Output:  outputRecorder,
+		Padding: 2,
+		Width:   buttonWidth,
+		Height:  buttonHeight,
+	}
+
+	err := packer.Run(context.Background(), params)
+	if err == nil {
+		t.Errorf("Expected run to fail but unstead got nil error")
+	}
+}
+
 func createUnderlineString(input string) string {
 	inputLength := len(input)
 	chars := make([]rune, inputLength)
