@@ -5,7 +5,7 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/RaniSputnik/packing",
-			"Rev": "f8afa502f56e3f6713338a00835d84c67f249a5a"
+			"Rev": "0b9a165d84360fb98012ed44193230c08b09db8b"
 		}
 	]
 }

@@ -111,10 +111,11 @@ func Run(ctx context.Context, params *Params) error {
 		}
 
 		// Arrange the images into the atlas space
-		packer := &packing.BinPacker{}
-		err = packer.Fit(params.Width, params.Height, sprites...)
-		if err == packing.ErrInputTooLarge {
-			return err
+		packer := packing.NewBinPacker(params.Width, params.Height)
+		for _, sprite := range sprites {
+			if err := packer.Pack(sprite); err == packing.ErrInputTooLarge {
+				return err
+			}
 		}
 
 		// TODO I think we could reuse this rather than

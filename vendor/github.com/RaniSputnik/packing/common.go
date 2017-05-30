@@ -6,9 +6,9 @@ import "errors"
 // the max size of the packer - it can not possibly fit
 var ErrInputTooLarge = errors.New("input too large, can not be processed")
 
-// ErrOutOfRoom indicates a partial success, not all of the
-// blocks fit into the maximum size of the packer
-var ErrOutOfRoom = errors.New("out of room, could not place all blocks")
+// ErrOutOfRoom indicates that the packer does not have enough
+// room left for the block to be packed successfully.
+var ErrOutOfRoom = errors.New("out of room")
 
 // Block is the interface that represents a unit of space
 // that can be packed alongside other Blocks.
@@ -22,15 +22,9 @@ type Block interface {
 	Place(x int, y int)
 }
 
-// Packer is the interface that wraps the Fit method.
-//
-// Fit sets a width and height for a packer then attempts
-// to fit all blocks into the given region. If the blocks
-// do not fit into the given area then an error is returned.
-//
-// Implementations should not retain blocks.
+// Packer is the interface that wraps the Pack method.
 type Packer interface {
-	Fit(width int, height int, blocks ...Block) error
+	Pack(block Block) error
 }
 
 type node struct {
