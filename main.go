@@ -33,6 +33,7 @@ func main() {
 	pFormat := flag.String("format", packer.DefaultFormatName, "the export format of the atlas")
 	pWidth := flag.Int("width", packer.DefaultAtlasWidth, "maximum width of an atlas image")
 	pHeight := flag.Int("height", packer.DefaultAtlasHeight, "maximum height of an atlas image")
+	pMaxAtlases := flag.Int("maxatlases", 0, "the maximum number of atlases to write, 0 indicates no maximum")
 	pCPUProfile := flag.String("cpuprofile", "", "write cpu profile to file")
 	pMemprofile := flag.String("memprofile", "", "write memory profile to file")
 
@@ -58,12 +59,13 @@ func main() {
 
 	stopTimer := startTimer("Texture packing")
 	err := packer.Run(context.Background(), &packer.Params{
-		Name:   *pName,
-		Input:  packer.NewFileStream(inputDir),
-		Output: packer.NewFileOutputter(*pOutputDir),
-		Format: *pFormat,
-		Width:  *pWidth,
-		Height: *pHeight,
+		Name:       *pName,
+		Input:      packer.NewFileStream(inputDir),
+		Output:     packer.NewFileOutputter(*pOutputDir),
+		Format:     *pFormat,
+		Width:      *pWidth,
+		Height:     *pHeight,
+		MaxAtlases: *pMaxAtlases,
 	})
 	stopTimer()
 

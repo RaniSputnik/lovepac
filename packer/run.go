@@ -105,6 +105,11 @@ func Run(ctx context.Context, params *Params) error {
 
 	// TODO turn refactor these steps into pipeline
 	for {
+		// Return error if maxAtlases param exceeded
+		if params.MaxAtlases > 0 && totalNumberOfAtlases == params.MaxAtlases {
+			return fmt.Errorf("Maximum number of atlases (%d) exceeded", params.MaxAtlases)
+		}
+
 		// Arrange the images into the atlas space
 		packer := &packing.BinPacker{}
 		err = packer.Fit(params.Width, params.Height, sprites...)
