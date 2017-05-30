@@ -58,3 +58,13 @@ func (r *OutputRecorder) Got() map[string]string {
 func NewOutputRecorder() *OutputRecorder {
 	return &OutputRecorder{map[string]*bufferWithClose{}}
 }
+
+// Helper method that takes care of opening / closing a file with the given outputter
+func withFile(outputter Outputter, filename string, do func(writer io.Writer) error) error {
+	writer, err := outputter.GetWriter(filename)
+	if err != nil {
+		return err
+	}
+	defer writer.Close()
+	return do(writer)
+}

@@ -5,9 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"image/png"
 	"sort"
-	"text/template"
 
 	"sync"
 
@@ -137,21 +135,11 @@ func Run(ctx context.Context, params *Params) error {
 			Width:         params.Width,
 			Height:        params.Height,
 		}
-		wg.Add(2)
+		wg.Add(1)
 
 		go func(ctx context.Context, errc chan<- error, wg *sync.WaitGroup) {
-			// Create and write the resulting image
 			select {
-			case errc <- createImage(atlas, params.Output):
-			case <-ctx.Done():
-			}
-			wg.Done()
-		}(ctx, errc, wg)
-
-		go func(ctx context.Context, errc chan<- error, wg *sync.WaitGroup) {
-			// Create and write the file that describes the image
-			select {
-			case errc <- createDescriptor(descFormat.Template, atlas, params.Output):
+			case errc <- atlas.Output(params.Output, descFormat.Template):
 			case <-ctx.Done():
 			}
 			wg.Done()
@@ -261,30 +249,4 @@ func decode(ctx context.Context, in <-chan Asset, out chan<- *assetDecodeResult)
 
 		publishResult(spr, nil)
 	}
-}
-
-func createImage(atlas *Atlas, outputter Outputter) error {
-	img := atlas.CreateImage()
-
-	writer, err := outputter.GetWriter(atlas.ImageFilename)
-	if err != nil {
-		return err
-	}
-	defer writer.Close()
-
-	err = png.Encode(writer, img)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func createDescriptor(t *template.Template, atlas *Atlas, outputter Outputter) error {
-	writer, err := outputter.GetWriter(atlas.DescFilename)
-	if err != nil {
-		return err
-	}
-	defer writer.Close()
-	t.Execute(writer, atlas)
-	return nil
 }
