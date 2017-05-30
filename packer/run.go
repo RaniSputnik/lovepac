@@ -33,6 +33,7 @@ type Params struct {
 	Output        Outputter
 	Format        string
 	Width, Height int
+	MaxAtlases    int
 }
 
 // applySensibleDefaults will fill in nil values with values

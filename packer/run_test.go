@@ -162,3 +162,31 @@ func TestRunWithTooManyFilesForOneAtlasResultsInMultipleAtlases(t *testing.T) {
 		}
 	}
 }
+
+func TestRunWithTooManyFilesAndMaxAtlasesResultsInError(t *testing.T) {
+	files := []string{
+		"button_active.png",
+		"button_hover.png",
+		"button.png",
+		"character_evil.png",
+		"character_hero.png",
+	}
+
+	outputRecorder := packer.NewOutputRecorder()
+	params := &packer.Params{
+		Input:  packer.NewFilenameStream("./fixtures", files...),
+		Output: outputRecorder,
+		// Here's the crutial part - constrain the width
+		// to a size too small for all of the files to fit
+		// AND limit the number of atlases
+		Width:      400,
+		Height:     400,
+		MaxAtlases: 1,
+	}
+
+	err := packer.Run(context.Background(), params)
+
+	if err == nil {
+		t.Errorf("Expected run to fail but error was nil")
+	}
+}
