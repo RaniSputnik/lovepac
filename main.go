@@ -33,6 +33,7 @@ func main() {
 	pFormat := flag.String("format", packer.DefaultFormatName, "the export format of the atlas")
 	pWidth := flag.Int("width", packer.DefaultAtlasWidth, "maximum width of an atlas image")
 	pHeight := flag.Int("height", packer.DefaultAtlasHeight, "maximum height of an atlas image")
+	pPadding := flag.Int("padding", 0, "the space between images in the atlas")
 	pMaxAtlases := flag.Int("maxatlases", 0, "the maximum number of atlases to write, 0 indicates no maximum")
 	pCPUProfile := flag.String("cpuprofile", "", "write cpu profile to file")
 	pMemprofile := flag.String("memprofile", "", "write memory profile to file")
@@ -65,6 +66,7 @@ func main() {
 		Format:     *pFormat,
 		Width:      *pWidth,
 		Height:     *pHeight,
+		Padding:    *pPadding,
 		MaxAtlases: *pMaxAtlases,
 	})
 	stopTimer()

@@ -57,8 +57,8 @@ type Params struct {
 	Output        Outputter
 	Format        string
 	Width, Height int
-	MaxAtlases    int
 	Padding       int
+	MaxAtlases    int
 }
 
 // applySensibleDefaults will fill in nil values with values
@@ -117,7 +117,7 @@ func Run(ctx context.Context, params *Params) error {
 	}
 
 	// Read the images from the input directory
-	sprites, err := readAssetStream(ctx, params.Input)
+	sprites, err := readAssetStream(ctx, params.Input, params.Padding)
 	if err != nil {
 		return err
 	}
@@ -204,7 +204,7 @@ type assetDecodeResult struct {
 	Err    error
 }
 
-func readAssetStream(ctx context.Context, assetStream AssetStreamer) ([]packing.Block, error) {
+func readAssetStream(ctx context.Context, assetStream AssetStreamer, padding int) ([]packing.Block, error) {
 	ctx, cancelCtx := context.WithCancel(ctx)
 	defer cancelCtx()
 	// Stream the input
@@ -216,7 +216,7 @@ func readAssetStream(ctx context.Context, assetStream AssetStreamer) ([]packing.
 	wg.Add(numDecoders)
 	for i := 0; i < numDecoders; i++ {
 		go func() {
-			decode(ctx, assets, out)
+			decode(ctx, padding, assets, out)
 			wg.Done()
 		}()
 	}
@@ -244,7 +244,7 @@ func readAssetStream(ctx context.Context, assetStream AssetStreamer) ([]packing.
 // Decodes assets from the in channel and publishes the results to
 // the out channel. Will continue even after errors have been discovered
 // cancel the context to interrupt early.
-func decode(ctx context.Context, in <-chan Asset, out chan<- *assetDecodeResult) {
+func decode(ctx context.Context, padding int, in <-chan Asset, out chan<- *assetDecodeResult) {
 	publishResult := func(spr *sprite, err error) {
 		select {
 		case out <- &assetDecodeResult{spr, err}:
@@ -268,10 +268,11 @@ func decode(ctx context.Context, in <-chan Asset, out chan<- *assetDecodeResult)
 
 		rect := img.Bounds()
 		spr := &sprite{
-			path: asset.Asset(),
-			img:  img,
-			w:    rect.Dx(),
-			h:    rect.Dy(),
+			path:    asset.Asset(),
+			img:     img,
+			w:       rect.Dx(),
+			h:       rect.Dy(),
+			padding: padding,
 		}
 
 		publishResult(spr, nil)

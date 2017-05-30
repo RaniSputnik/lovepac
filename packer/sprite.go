@@ -10,18 +10,21 @@ import (
 // and contains information about the image that it
 // was constructed to represent
 type sprite struct {
-	path   string
-	img    image.Image
-	x, y   int
-	w, h   int
-	placed bool
+	path    string
+	img     image.Image
+	x, y    int
+	w, h    int
+	padding int
+	placed  bool
 }
 
 // Implement block interface
-func (s *sprite) Size() (int, int) { return s.w, s.h }
+func (s *sprite) Size() (int, int) {
+	return s.w + s.padding, s.h + s.padding
+}
 func (s *sprite) Place(x int, y int) {
-	s.x = x
-	s.y = y
+	s.x = x + s.padding
+	s.y = y + s.padding
 	s.placed = true
 }
 

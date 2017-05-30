@@ -17,8 +17,9 @@ type Atlas struct {
 	DescFilename  string
 	ImageFilename string
 
-	Width  int
-	Height int
+	Width   int
+	Height  int
+	Padding int
 }
 
 func (a *Atlas) CreateImage() image.Image {
