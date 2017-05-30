@@ -103,7 +103,8 @@ func Run(ctx context.Context, params *Params) error {
 	errc := make(chan error)
 	sort.Sort(packing.ByArea(sprites))
 
-	// TODO turn refactor these steps into pipeline
+	completedSprites := make([]packing.Block, 0, totalNumberOfSprites)
+	incompleteSprites := make([]packing.Block, 0, totalNumberOfSprites)
 	for {
 		// Return error if maxAtlases param exceeded
 		if params.MaxAtlases > 0 && totalNumberOfAtlases == params.MaxAtlases {
@@ -111,23 +112,17 @@ func Run(ctx context.Context, params *Params) error {
 		}
 
 		// Arrange the images into the atlas space
+		completedSprites = completedSprites[:0]
+		incompleteSprites = incompleteSprites[:0]
 		packer := packing.NewBinPacker(params.Width, params.Height)
 		for _, sprite := range sprites {
-			if err := packer.Pack(sprite); err == packing.ErrInputTooLarge {
-				return err
-			}
-		}
-
-		// TODO I think we could reuse this rather than
-		// reallocating each run through the loop
-		completedSprites := make([]packing.Block, 0, totalNumberOfSprites)
-		incompleteSprites := make([]packing.Block, 0, totalNumberOfSprites)
-		for _, block := range sprites {
-			sprite := block.(*sprite)
-			if sprite.placed {
-				completedSprites = append(completedSprites, sprite)
-			} else {
+			switch packer.Pack(sprite) {
+			case packing.ErrInputTooLarge:
+				return packing.ErrInputTooLarge
+			case packing.ErrOutOfRoom:
 				incompleteSprites = append(incompleteSprites, sprite)
+			default:
+				completedSprites = append(completedSprites, sprite)
 			}
 		}
 
