@@ -14,11 +14,10 @@ import (
 // Assets commonly represent files in a filesystem, but could also
 // be blobs in a blobstore or images on a remote server.
 type Asset interface {
+	io.ReadCloser
+
 	// Asset returns the name of the given asset
 	Asset() string
-	// CreateReader creates a readcloser capable of
-	// reading an image from the asset source
-	CreateReader() (io.ReadCloser, error)
 }
 
 // AssetStreamer is a factory responsible for creating readers that
@@ -36,16 +35,12 @@ func (f AssetStreamerFunc) AssetStream(ctx context.Context) (<-chan Asset, <-cha
 }
 
 type FileAsset struct {
+	*os.File
 	Name string
-	Path string
 }
 
 func (a *FileAsset) Asset() string {
 	return a.Name
-}
-
-func (a *FileAsset) CreateReader() (io.ReadCloser, error) {
-	return os.Open(a.Path)
 }
 
 var errContextNil = errors.New("Context must not be nil")
@@ -84,8 +79,13 @@ func NewFileStream(inputDirectory string) AssetStreamer {
 					return err
 				}
 
+				file, err := os.Open(path)
+				if err != nil {
+					return err
+				}
+
 				select {
-				case stream <- &FileAsset{Name: relPath, Path: path}:
+				case stream <- &FileAsset{File: file, Name: relPath}:
 				case <-ctx.Done():
 					return ctx.Err()
 				}
@@ -113,9 +113,14 @@ func NewFilenameStream(directory string, files ...string) AssetStreamer {
 				return
 			}
 
-			for _, file := range files {
+			for _, filename := range files {
+				path := filepath.Join(directory, filename)
+				reader, err := os.Open(path)
+				if err != nil {
+					errc <- err
+				}
 				select {
-				case stream <- &FileAsset{Name: file, Path: filepath.Join(directory, file)}:
+				case stream <- &FileAsset{File: reader, Name: filename}:
 				case <-ctx.Done():
 					errc <- ctx.Err()
 					return

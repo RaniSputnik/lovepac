@@ -7,7 +7,7 @@ import (
 	"io"
 	"text/template"
 
-	"github.com/RaniSputnik/packing"
+	"github.com/RaniSputnik/lovepac/packing"
 )
 
 type Atlas struct {

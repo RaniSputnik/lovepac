@@ -9,7 +9,7 @@ import (
 
 	"sync"
 
-	"github.com/RaniSputnik/packing"
+	"github.com/RaniSputnik/lovepac/packing"
 )
 
 var (
@@ -253,14 +253,9 @@ func decode(ctx context.Context, padding int, in <-chan Asset, out chan<- *asset
 	}
 
 	for asset := range in {
-		reader, err := asset.CreateReader()
-		if err != nil {
-			publishResult(nil, err)
-			continue
-		}
-		defer reader.Close()
+		defer asset.Close()
 
-		img, _, err := image.Decode(reader)
+		img, _, err := image.Decode(asset)
 		if err != nil {
 			publishResult(nil, err)
 			continue
