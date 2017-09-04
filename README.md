@@ -33,3 +33,15 @@ Eg. Pack all files in ./assets directory and output to ./build in love format;
 go build
 ./lovepac -format love -out build ./assets/
 ```
+
+### Adding Templates
+
+Templates are generated using the `/templates/gen.go` function. This is run by go generate.
+
+To add a new template output format;
+
+1. Add a new `*.template` file in the `/templates` directory. Must be in the go template format.
+2. Run `go generate ./templates` to regenerate the `/templates/templates_generated.go` file.
+3. Use should now be able to reference your template by name from the `templates` package.
+
+TODO we still must manually add the template to the list of formats in `packer/format.go`. This is lame and can be cleaned up.
