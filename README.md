@@ -41,7 +41,7 @@ Targets are generated from templates using the `/target/gen.go` function. This i
 To add a new target output format;
 
 1. Add a new `*.template` file in the `/target` directory. Must be in the go template format.
-2. Run `go generate ./target` to regenerate the `/target/target_generated.go` file.
-3. Use should now be able to reference your target by name from the `target` package.
+2. Run `go generate ./target` to regenerate the templates in the `/target/target_generated.go` file.
+3. Finally export the target by adding a `template.Fomat` to the `target/target.go` file.
 
-TODO we still must manually add the template to the list of formats in `packer/format.go`. This is lame and can be cleaned up.
+Use should now be able to reference your target by name from the `target` package.

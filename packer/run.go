@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/RaniSputnik/lovepac/packing"
+	"github.com/RaniSputnik/lovepac/target"
 )
 
 var (
@@ -111,9 +112,9 @@ func Run(ctx context.Context, params *Params) error {
 	params.applySensibleDefaults()
 
 	// Get the output format
-	descFormat, err := GetFormatNamed(params.Format)
-	if err != nil {
-		return err
+	descFormat := GetFormatNamed(params.Format)
+	if descFormat == target.Unknown {
+		return ErrFormatIsInvalid
 	}
 
 	// Read the images from the input directory

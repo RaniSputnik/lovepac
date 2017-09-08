@@ -2,15 +2,9 @@ package packer
 
 import (
 	"errors"
-	"text/template"
 
 	"github.com/RaniSputnik/lovepac/target"
 )
-
-type Format struct {
-	Template *template.Template
-	Ext      string
-}
 
 const (
 	FormatStarling = "starling"
@@ -19,9 +13,9 @@ const (
 
 var ErrFormatIsInvalid = errors.New("Format is not valid")
 
-var formatLookup = map[string]*Format{
-	FormatStarling: &Format{Template: target.Starling, Ext: "xml"},
-	FormatLove:     &Format{Template: target.Love, Ext: "lua"},
+var formatLookup = map[string]target.Format{
+	FormatStarling: target.Starling,
+	FormatLove:     target.Love,
 }
 
 func FormatIsValid(format string) bool {
@@ -29,9 +23,9 @@ func FormatIsValid(format string) bool {
 	return ok
 }
 
-func GetFormatNamed(format string) (*Format, error) {
+func GetFormatNamed(format string) target.Format {
 	if !FormatIsValid(format) {
-		return nil, ErrFormatIsInvalid
+		return target.Unknown
 	}
-	return formatLookup[format], nil
+	return formatLookup[format]
 }

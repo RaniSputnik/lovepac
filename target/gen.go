@@ -56,7 +56,7 @@ func extractName(templateSource string) string {
 	if firstDotIndex >= 0 {
 		name = name[:firstDotIndex]
 	}
-	return strings.Title(name)
+	return name
 }
 
 func die(err error) {
@@ -75,6 +75,6 @@ import (
 	"text/template"
 )
 {{ range .Templates }}
-var {{ .Name }} = template.Must(template.New("{{ .Name }}").Parse(` + "`{{ .TemplateText }}`" + `))
+var {{ .Name }}Template = template.Must(template.New("{{ .Name }}").Parse(` + "`{{ .TemplateText }}`" + `))
 {{ end }}
 `))
