@@ -4,7 +4,7 @@ import (
 	"errors"
 	"text/template"
 
-	"github.com/RaniSputnik/lovepac/templates"
+	"github.com/RaniSputnik/lovepac/target"
 )
 
 type Format struct {
@@ -20,8 +20,8 @@ const (
 var ErrFormatIsInvalid = errors.New("Format is not valid")
 
 var formatLookup = map[string]*Format{
-	FormatStarling: &Format{Template: templates.Starling, Ext: "xml"},
-	FormatLove:     &Format{Template: templates.Love, Ext: "lua"},
+	FormatStarling: &Format{Template: target.Starling, Ext: "xml"},
+	FormatLove:     &Format{Template: target.Love, Ext: "lua"},
 }
 
 func FormatIsValid(format string) bool {
