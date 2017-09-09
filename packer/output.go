@@ -1,11 +1,9 @@
 package packer
 
 import (
-	"bytes"
 	"io"
 	"os"
 	"path"
-	"sync"
 )
 
 // Outputter is a factory responsible for creating writers that
@@ -30,39 +28,6 @@ func NewFileOutputter(outputDirectory string) Outputter {
 	return OutputterFunc(func(filename string) (io.WriteCloser, error) {
 		return os.Create(path.Join(outputDirectory, filename))
 	})
-}
-
-type OutputRecorder struct {
-	writers map[string]*bufferWithClose
-	*sync.Mutex
-}
-
-type bufferWithClose struct {
-	*bytes.Buffer
-}
-
-func (b *bufferWithClose) Close() error { return nil }
-
-func (r *OutputRecorder) GetWriter(filename string) (io.WriteCloser, error) {
-	buffer := &bufferWithClose{bytes.NewBufferString("")}
-	r.Lock()
-	r.writers[filename] = buffer
-	r.Unlock()
-	return buffer, nil
-}
-
-func (r *OutputRecorder) Got() map[string]*bytes.Buffer {
-	r.Lock()
-	results := map[string]*bytes.Buffer{}
-	for key, val := range r.writers {
-		results[key] = val.Buffer
-	}
-	r.Unlock()
-	return results
-}
-
-func NewOutputRecorder() *OutputRecorder {
-	return &OutputRecorder{map[string]*bufferWithClose{}, &sync.Mutex{}}
 }
 
 // Helper method that takes care of opening / closing a file with the given outputter

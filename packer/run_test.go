@@ -24,7 +24,7 @@ func TestRunOutputsAtlasAndDescriptor(t *testing.T) {
 		"myatlas-1.lua": "",
 	}
 
-	outputRecorder := packer.NewOutputRecorder()
+	outputRecorder := NewOutputRecorder()
 	params := &packer.Params{
 		Name:   "myatlas",
 		Format: target.Love,
@@ -61,7 +61,7 @@ func TestRunWithoutParamsSpecifiedUsesSensibleDefaults(t *testing.T) {
 		fmt.Sprintf("%s-1.lua", packer.DefaultAtlasName): "",
 	}
 
-	outputRecorder := packer.NewOutputRecorder()
+	outputRecorder := NewOutputRecorder()
 	params := &packer.Params{
 		Format: target.Love,
 		Input:  packer.NewFilenameStream("./fixtures", files...),
@@ -137,7 +137,7 @@ func TestRunWithTooManyFilesForOneAtlasResultsInMultipleAtlases(t *testing.T) {
 		fmt.Sprintf("%s-2.lua", packer.DefaultAtlasName): "",
 	}
 
-	outputRecorder := packer.NewOutputRecorder()
+	outputRecorder := NewOutputRecorder()
 	params := &packer.Params{
 		Format: target.Love,
 		Input:  packer.NewFilenameStream("./fixtures", files...),
@@ -177,7 +177,7 @@ func TestRunWithTooManyFilesAndMaxAtlasesResultsInError(t *testing.T) {
 		"character_hero.png",
 	}
 
-	outputRecorder := packer.NewOutputRecorder()
+	outputRecorder := NewOutputRecorder()
 	params := &packer.Params{
 		Format: target.Love,
 		Input:  packer.NewFilenameStream("./fixtures", files...),
@@ -202,7 +202,7 @@ func TestPaddingIsAppliedCorrectly(t *testing.T) {
 	buttonWidth, buttonHeight := 124, 50
 	padding := 2
 
-	outputRecorder := packer.NewOutputRecorder()
+	outputRecorder := NewOutputRecorder()
 	params := &packer.Params{
 		Input:   packer.NewFilenameStream("./fixtures", button),
 		Output:  outputRecorder,
@@ -233,7 +233,7 @@ func TestAssetsDoNotFitIfPaddingCannotBeApplied(t *testing.T) {
 	button := "button.png"
 	buttonWidth, buttonHeight := 124, 50
 
-	outputRecorder := packer.NewOutputRecorder()
+	outputRecorder := NewOutputRecorder()
 	params := &packer.Params{
 		Format:  target.Love,
 		Input:   packer.NewFilenameStream("./fixtures", button),
