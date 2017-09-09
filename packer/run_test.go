@@ -26,7 +26,7 @@ func TestRunOutputsAtlasAndDescriptor(t *testing.T) {
 	outputRecorder := packer.NewOutputRecorder()
 	params := &packer.Params{
 		Name:   "myatlas",
-		Format: packer.FormatLove,
+		Format: "love",
 		Input:  packer.NewFilenameStream("./fixtures", files...),
 		Output: outputRecorder,
 		Width:  1024,
@@ -203,7 +203,7 @@ func TestPaddingIsAppliedCorrectly(t *testing.T) {
 		Input:   packer.NewFilenameStream("./fixtures", button),
 		Output:  outputRecorder,
 		Name:    "atlas",
-		Format:  packer.FormatLove,
+		Format:  "love",
 		Padding: padding,
 	}
 

@@ -26,5 +26,17 @@ var (
 	// Love format for the love2d game engine
 	Love = Format{"love", loveTemplate, "lua"}
 	// Starling format for the Starling game engine
-	Starling = Format{"Starling", starlingTemplate, "xml"}
+	Starling = Format{"starling", starlingTemplate, "xml"}
 )
+
+var allFormats = []Format{Love, Starling}
+
+// FormatNamed returns the format with the given name
+func FormatNamed(name string) Format {
+	for _, format := range allFormats {
+		if format.Name == name {
+			return format
+		}
+	}
+	return Unknown
+}

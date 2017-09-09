@@ -19,7 +19,7 @@ var (
 	DefaultAtlasName = "atlas"
 	// DefaultFormatName is the default format used
 	// if no format is specified
-	DefaultFormatName = FormatLove
+	DefaultFormatName = target.Love.Name
 	// DefaultAtlasWidth is the width used if no width is specified
 	DefaultAtlasWidth = 2048
 	// DefaultAtlasHeight is the height used if no height is specified
@@ -112,9 +112,9 @@ func Run(ctx context.Context, params *Params) error {
 	params.applySensibleDefaults()
 
 	// Get the output format
-	descFormat := GetFormatNamed(params.Format)
+	descFormat := target.FormatNamed(params.Format)
 	if descFormat == target.Unknown {
-		return ErrFormatIsInvalid
+		return fmt.Errorf("Unknown atlas format '%s'", params.Format)
 	}
 
 	// Read the images from the input directory
