@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/RaniSputnik/lovepac/packer"
+	"github.com/RaniSputnik/lovepac/target"
 
 	"log"
 	"os"
@@ -30,7 +31,7 @@ func main() {
 	pName := flag.String("name", packer.DefaultAtlasName, "the base name of the output images and data files")
 	pOutputDir := flag.String("out", "", "the directory to output the result to")
 	pVerbose = flag.Bool("v", false, "use verbose logging")
-	pFormat := flag.String("format", packer.DefaultFormatName, "the export format of the atlas")
+	pFormat := flag.String("format", "love", "the export format of the atlas")
 	pWidth := flag.Int("width", packer.DefaultAtlasWidth, "maximum width of an atlas image")
 	pHeight := flag.Int("height", packer.DefaultAtlasHeight, "maximum height of an atlas image")
 	pPadding := flag.Int("padding", 0, "the space between images in the atlas")
@@ -58,12 +59,17 @@ func main() {
 	}
 	inputDir := args[0]
 
+	format := target.FormatNamed(*pFormat)
+	if format == target.Unknown {
+		log.Fatalf("Unknown format '%s'", *pFormat)
+	}
+
 	stopTimer := startTimer("Texture packing")
 	err := packer.Run(context.Background(), &packer.Params{
 		Name:       *pName,
 		Input:      packer.NewFileStream(inputDir),
 		Output:     packer.NewFileOutputter(*pOutputDir),
-		Format:     *pFormat,
+		Format:     format,
 		Width:      *pWidth,
 		Height:     *pHeight,
 		Padding:    *pPadding,

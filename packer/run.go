@@ -17,9 +17,6 @@ var (
 	// DefaultAtlasName is the default base name for
 	// outputted files when no name is provided
 	DefaultAtlasName = "atlas"
-	// DefaultFormatName is the default format used
-	// if no format is specified
-	DefaultFormatName = target.Love.Name
 	// DefaultAtlasWidth is the width used if no width is specified
 	DefaultAtlasWidth = 2048
 	// DefaultAtlasHeight is the height used if no height is specified
@@ -27,8 +24,8 @@ var (
 )
 
 // Params are provided to the Run method to configure
-// the texture packing output. Input and Ouput parameters are required
-// all other parameters are optional. You can use the public
+// the texture packing output. Input, Ouput and Format parameters are
+// required all other parameters are optional. You can use the public
 // 'Default' properties to configure the defaults used when parameters
 // are missing.
 //
@@ -44,8 +41,10 @@ var (
 // In most cases packer.NewFileOutputter will suffice. Output is a required
 // parameter.
 //
-// Format should be a string referencing one of the previously registered
-// atlas descriptor formats.
+// Format should be a target format, used to define the descriptor format
+// of the atlas. The descriptor acompanies the image to indicate where
+// subimages can be found within the atlas. A target format should include
+// a valid template and file extension format, all other settings are optional.
 //
 // Width and Height configure the maximum size of the atlases outputted.
 // TODO 0 should be interpreted as no maxumum size.
@@ -56,7 +55,7 @@ type Params struct {
 	Name          string
 	Input         AssetStreamer
 	Output        Outputter
-	Format        string
+	Format        target.Format
 	Width, Height int
 	Padding       int
 	MaxAtlases    int
@@ -68,9 +67,6 @@ func (p *Params) applySensibleDefaults() {
 	if p.Name == "" {
 		p.Name = DefaultAtlasName
 	}
-	if p.Format == "" {
-		p.Format = DefaultFormatName
-	}
 	if p.Width == 0 {
 		p.Width = DefaultAtlasWidth
 	}
@@ -79,7 +75,7 @@ func (p *Params) applySensibleDefaults() {
 	}
 }
 
-// ensureRequiredParametersArePresent tests the parameters for
+// validateRequiredParameters tests the parameters for
 // a non-nil input method and a non-nil output method.
 func (p *Params) validateRequiredParameters() error {
 	if p.Input == nil {
@@ -101,6 +97,9 @@ func Run(ctx context.Context, params *Params) error {
 	if params == nil {
 		return errors.New("Params must not be nil")
 	}
+	if !params.Format.IsValid() {
+		return errors.New("Invalid 'Format' parameter")
+	}
 
 	ctx, cancelCtx := context.WithCancel(ctx)
 	defer cancelCtx()
@@ -110,12 +109,6 @@ func Run(ctx context.Context, params *Params) error {
 		return err
 	}
 	params.applySensibleDefaults()
-
-	// Get the output format
-	descFormat := target.FormatNamed(params.Format)
-	if descFormat == target.Unknown {
-		return fmt.Errorf("Unknown atlas format '%s'", params.Format)
-	}
 
 	// Read the images from the input directory
 	sprites, err := readAssetStream(ctx, params.Input, params.Padding)
@@ -157,7 +150,7 @@ func Run(ctx context.Context, params *Params) error {
 		atlas := &Atlas{
 			Name:         atlasName,
 			Sprites:      completedSprites,
-			DescFilename: fmt.Sprintf("%s.%s", atlasName, descFormat.Ext),
+			DescFilename: fmt.Sprintf("%s.%s", atlasName, params.Format.Ext),
 			// TODO add image type parameter
 			ImageFilename: fmt.Sprintf("%s.%s", atlasName, "png"),
 			Width:         params.Width,
@@ -167,7 +160,7 @@ func Run(ctx context.Context, params *Params) error {
 
 		go func(ctx context.Context, errc chan<- error, wg *sync.WaitGroup) {
 			select {
-			case errc <- atlas.Output(params.Output, descFormat.Template):
+			case errc <- atlas.Output(params.Output, params.Format.Template):
 			case <-ctx.Done():
 			}
 			wg.Done()

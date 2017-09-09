@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/RaniSputnik/lovepac/packer"
+	"github.com/RaniSputnik/lovepac/target"
 )
 
 func TestRunOutputsAtlasAndDescriptor(t *testing.T) {
@@ -26,7 +27,7 @@ func TestRunOutputsAtlasAndDescriptor(t *testing.T) {
 	outputRecorder := packer.NewOutputRecorder()
 	params := &packer.Params{
 		Name:   "myatlas",
-		Format: "love",
+		Format: target.Love,
 		Input:  packer.NewFilenameStream("./fixtures", files...),
 		Output: outputRecorder,
 		Width:  1024,
@@ -62,6 +63,7 @@ func TestRunWithoutParamsSpecifiedUsesSensibleDefaults(t *testing.T) {
 
 	outputRecorder := packer.NewOutputRecorder()
 	params := &packer.Params{
+		Format: target.Love,
 		Input:  packer.NewFilenameStream("./fixtures", files...),
 		Output: outputRecorder,
 	}
@@ -137,6 +139,7 @@ func TestRunWithTooManyFilesForOneAtlasResultsInMultipleAtlases(t *testing.T) {
 
 	outputRecorder := packer.NewOutputRecorder()
 	params := &packer.Params{
+		Format: target.Love,
 		Input:  packer.NewFilenameStream("./fixtures", files...),
 		Output: outputRecorder,
 		// Here's the crutial part - constrain the width
@@ -176,6 +179,7 @@ func TestRunWithTooManyFilesAndMaxAtlasesResultsInError(t *testing.T) {
 
 	outputRecorder := packer.NewOutputRecorder()
 	params := &packer.Params{
+		Format: target.Love,
 		Input:  packer.NewFilenameStream("./fixtures", files...),
 		Output: outputRecorder,
 		// Here's the crutial part - constrain the width
@@ -203,7 +207,7 @@ func TestPaddingIsAppliedCorrectly(t *testing.T) {
 		Input:   packer.NewFilenameStream("./fixtures", button),
 		Output:  outputRecorder,
 		Name:    "atlas",
-		Format:  "love",
+		Format:  target.Love,
 		Padding: padding,
 	}
 
@@ -231,6 +235,7 @@ func TestAssetsDoNotFitIfPaddingCannotBeApplied(t *testing.T) {
 
 	outputRecorder := packer.NewOutputRecorder()
 	params := &packer.Params{
+		Format:  target.Love,
 		Input:   packer.NewFilenameStream("./fixtures", button),
 		Output:  outputRecorder,
 		Padding: 2,

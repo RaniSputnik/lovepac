@@ -20,8 +20,7 @@ type Asset interface {
 	Asset() string
 }
 
-// AssetStreamer is a factory responsible for creating readers that
-// can read the contents of a given asset
+// AssetStreamer is a factory responsible for piping assets to a channel
 type AssetStreamer interface {
 	AssetStream(ctx context.Context) (<-chan Asset, <-chan error)
 }

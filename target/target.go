@@ -18,6 +18,13 @@ type Format struct {
 	Name     string
 	Template *template.Template
 	Ext      string
+	// TODO add features supported (eg. trimming, rotation etc)
+}
+
+// IsValid checks that a format has a valid template
+// and file extension
+func (f Format) IsValid() bool {
+	return f.Template != nil && f.Ext != ""
 }
 
 var (
