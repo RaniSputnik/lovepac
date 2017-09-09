@@ -33,12 +33,12 @@ func (f AssetStreamerFunc) AssetStream(ctx context.Context) (<-chan Asset, <-cha
 	return f(ctx)
 }
 
-type FileAsset struct {
+type fileAsset struct {
 	*os.File
 	Name string
 }
 
-func (a *FileAsset) Asset() string {
+func (a *fileAsset) Asset() string {
 	return a.Name
 }
 
@@ -84,7 +84,7 @@ func NewFileStream(inputDirectory string) AssetStreamer {
 				}
 
 				select {
-				case stream <- &FileAsset{File: file, Name: relPath}:
+				case stream <- &fileAsset{File: file, Name: relPath}:
 				case <-ctx.Done():
 					return ctx.Err()
 				}
@@ -119,7 +119,7 @@ func NewFilenameStream(directory string, files ...string) AssetStreamer {
 					errc <- err
 				}
 				select {
-				case stream <- &FileAsset{File: reader, Name: filename}:
+				case stream <- &fileAsset{File: reader, Name: filename}:
 				case <-ctx.Done():
 					errc <- ctx.Err()
 					return
