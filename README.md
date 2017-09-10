@@ -1,6 +1,14 @@
 # lovepac
 A texture packer for [love2d](https://love2d.org) written in Go lang.
 
+### Installation
+
+With [go](https://golang.org/) installed;
+
+```
+go get github.com/RaniSputnik/lovepac
+```
+
 ### Features
 
 - Optimise your texture memory usage
@@ -30,8 +38,7 @@ Usage : lovepac -flags <inputdir>
 Eg. Pack all files in ./assets directory and output to ./build in love format;
 
 ```
-go build
-./lovepac -format love -out build ./assets/
+lovepac -format love -out build ./assets/
 ```
 
 ### Package
