@@ -154,7 +154,7 @@ func Run(ctx context.Context, params *Params) error {
 
 		totalNumberOfAtlases++
 		atlasName := fmt.Sprintf("%s-%d", params.Name, totalNumberOfAtlases)
-		atlas := &Atlas{
+		atlas := &atlas{
 			Name:         atlasName,
 			Sprites:      completedSprites,
 			DescFilename: fmt.Sprintf("%s.%s", atlasName, params.Format.Ext),

@@ -10,7 +10,7 @@ import (
 	"github.com/RaniSputnik/lovepac/packing"
 )
 
-type Atlas struct {
+type atlas struct {
 	Name    string
 	Sprites []packing.Block
 
@@ -22,7 +22,7 @@ type Atlas struct {
 	Padding int
 }
 
-func (a *Atlas) CreateImage() image.Image {
+func (a *atlas) CreateImage() image.Image {
 	img := image.NewNRGBA(image.Rect(0, 0, a.Width, a.Height))
 
 	for i := range a.Sprites {
@@ -34,7 +34,7 @@ func (a *Atlas) CreateImage() image.Image {
 	return img
 }
 
-func (a *Atlas) Output(outputter Outputter, descriptorTemplate *template.Template) error {
+func (a *atlas) Output(outputter Outputter, descriptorTemplate *template.Template) error {
 	errc := make(chan error, 2)
 	go func() {
 		// Create and write the resulting image
