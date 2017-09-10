@@ -23,34 +23,9 @@ var (
 	DefaultAtlasHeight = 2048
 )
 
-// Params are provided to the Run method to configure
-// the texture packing output. Input, Ouput and Format parameters are
-// required all other parameters are optional. You can use the public
-// 'Default' properties to configure the defaults used when parameters
-// are missing.
-//
-// Name is the name that will be prepended to the atlas files
-// outputted. Eg. a value of "myatlas" would result in "myatlas-1.png"
-//
-// Input is used to provide readers for the assets that will be packed.
-// In most cases packer.NewFileStream can be used to read from the local
-// filesystem, but you could write an input that reads from a server, network
-// etc. Input is a required parameter.
-//
-// Output is used to provide writers for the atlas files to be written.
-// In most cases packer.NewFileOutputter will suffice. Output is a required
-// parameter.
-//
-// Format should be a target format, used to define the descriptor format
-// of the atlas. The descriptor acompanies the image to indicate where
-// subimages can be found within the atlas. A target format should include
-// a valid template and file extension format, all other settings are optional.
-//
-// Width and Height configure the maximum size of the atlases outputted.
-// TODO 0 should be interpreted as no maxumum size.
-//
-// MaxAtlases can be used to limit the number of atlases outputted. A value
-// of 0 is interpreted as no limit.
+// Params are passed to the packer.Run to configure the texture packing.
+// Input, Output and Format are required, all other options will use
+// sensible defaults if not explicitly provided.
 type Params struct {
 	Name          string
 	Input         AssetStreamer
@@ -90,6 +65,38 @@ func (p *Params) validateRequiredParameters() error {
 // Run performs the texture packing. It reads files from the given
 // AssetStreamer and outputs the results to the given Outputter
 // returning an error if any critical failures are encountered.
+//
+// Context is used to immediately cancel any further work on the
+// the texture packing. A context must be supplied.
+//
+// Params are provided to the Run method to configure
+// the texture packing output. Input, Ouput and Format parameters are
+// required all other parameters are optional. You can use the public
+// 'Default' properties to configure the defaults used when parameters
+// are missing.
+//
+// Name is the name that will be prepended to the atlas files
+// outputted. Eg. a value of "myatlas" would result in "myatlas-1.png"
+//
+// Input is used to provide readers for the assets that will be packed.
+// In most cases packer.NewFileStream can be used to read from the local
+// filesystem, but you could write an input that reads from a server, network
+// etc. Input is a required parameter.
+//
+// Output is used to provide writers for the atlas files to be written.
+// In most cases packer.NewFileOutputter will suffice. Output is a required
+// parameter.
+//
+// Format should be a target format, used to define the descriptor format
+// of the atlas. The descriptor acompanies the image to indicate where
+// subimages can be found within the atlas. A target format should include
+// a valid template and file extension format, all other settings are optional.
+//
+// Width and Height configure the maximum size of the atlases outputted.
+// TODO 0 should be interpreted as no maxumum size.
+//
+// MaxAtlases can be used to limit the number of atlases outputted. A value
+// of 0 is interpreted as no limit.
 func Run(ctx context.Context, params *Params) error {
 	if ctx == nil {
 		return errors.New("Context must not be nil")

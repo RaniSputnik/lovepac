@@ -34,6 +34,32 @@ go build
 ./lovepac -format love -out build ./assets/
 ```
 
+### Package
+
+This texture packer can also be used as a library by consuming the packer and target
+packages.
+
+```
+import (
+  ...
+  "github.com/RaniSputnik/lovepac/packer"
+  "github.com/RaniSputnik/lovepac/target"
+)
+...
+params := packer.Params{
+  Name:   "myatlas",
+  Format: target.Love,
+  Input:  packer.NewFileStream("./assets"),
+  Output: packer.NewFileOutputter("./build"),
+  Width:  512,
+  Height: 512,
+}
+log.Fatal(packer.Run(context.Background(), &params))
+```
+
+See the [godoc](https://godoc.org/github.com/RaniSputnik/lovepac/packer) for
+more information and examples.
+
 ### Adding Output Targets
 
 Targets are generated from templates using the `/target/gen.go` function. This is run by go generate.
