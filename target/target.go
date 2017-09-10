@@ -1,3 +1,5 @@
+// Package target defines different known output formats for
+// the texture packer.
 package target
 
 import "text/template"
@@ -5,19 +7,17 @@ import "text/template"
 //go:generate go run gen.go
 
 // Format represents a target atlas format.
-//
-// Name is simply the name of the format.
-//
-// Template is the text template that will
-// be used to render the atlas descriptor file.
-//
-// Ext is the file extension that should be
-// used when the descriptor file is written to
-// the file system.
 type Format struct {
-	Name     string
+	// Name describes this output format
+	Name string
+	// Template is a go text template that will
+	// be used to render the atlas descriptor file.
 	Template *template.Template
-	Ext      string
+	// Ext is the file extension that should be
+	// used when the descriptor file is written to
+	// the file system.
+	Ext string
+
 	// TODO add features supported (eg. trimming, rotation etc)
 }
 
@@ -38,7 +38,7 @@ var (
 
 var allFormats = []Format{Love, Starling}
 
-// FormatNamed returns the format with the given name
+// FormatNamed returns a known format with the given name.
 func FormatNamed(name string) Format {
 	for _, format := range allFormats {
 		if format.Name == name {
