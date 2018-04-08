@@ -1,7 +1,6 @@
 package packer
 
 import (
-	"image"
 	"path"
 	"strings"
 )
@@ -10,8 +9,8 @@ import (
 // and contains information about the image that it
 // was constructed to represent
 type sprite struct {
+	Asset
 	path    string
-	img     image.Image
 	x, y    int
 	w, h    int
 	padding int
