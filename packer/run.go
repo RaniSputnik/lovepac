@@ -254,9 +254,14 @@ func decode(ctx context.Context, padding int, in <-chan Asset, out chan<- *asset
 	}
 
 	for asset := range in {
-		defer asset.Close()
+		assetReader, err := asset.Reader()
+		if err != nil {
+			publishResult(nil, err)
+			continue
+		}
+		defer assetReader.Close()
 
-		img, _, err := image.Decode(asset)
+		img, _, err := image.Decode(assetReader)
 		if err != nil {
 			publishResult(nil, err)
 			continue
