@@ -22,16 +22,27 @@ type atlas struct {
 	Padding int
 }
 
-func (a *atlas) CreateImage() image.Image {
+func (a *atlas) CreateImage() (image.Image, error) {
 	img := image.NewNRGBA(image.Rect(0, 0, a.Width, a.Height))
 
+	// TODO run these draw steps in parallel
 	for i := range a.Sprites {
 		spr := a.Sprites[i].(*sprite)
 		rect := image.Rect(spr.x, spr.y, spr.x+spr.w, spr.y+spr.h)
-		draw.Draw(img, rect, spr.img, image.ZP, draw.Src)
+
+		assetReader, err := spr.Asset.Reader()
+		if err != nil {
+			return nil, err
+		}
+		sprImg, _, err := image.Decode(assetReader)
+		if err != nil {
+			return nil, err
+		}
+
+		draw.Draw(img, rect, sprImg, image.ZP, draw.Src)
 	}
 
-	return img
+	return img, nil
 }
 
 func (a *atlas) Output(outputter Outputter, descriptorTemplate *template.Template) error {
@@ -39,7 +50,10 @@ func (a *atlas) Output(outputter Outputter, descriptorTemplate *template.Templat
 	go func() {
 		// Create and write the resulting image
 		errc <- withFile(outputter, a.ImageFilename, func(writer io.Writer) error {
-			img := a.CreateImage()
+			img, err := a.CreateImage()
+			if err != nil {
+				return err
+			}
 			return png.Encode(writer, img)
 		})
 	}()

@@ -14,7 +14,7 @@ import (
 // Assets commonly represent files in a filesystem, but could also
 // be blobs in a blobstore or images on a remote server.
 type Asset interface {
-	io.ReadCloser
+	Reader() (io.ReadCloser, error)
 
 	// Asset returns the name of the given asset
 	Asset() string
@@ -34,8 +34,12 @@ func (f AssetStreamerFunc) AssetStream(ctx context.Context) (<-chan Asset, <-cha
 }
 
 type fileAsset struct {
-	*os.File
 	Name string
+	path string
+}
+
+func (a *fileAsset) Reader() (io.ReadCloser, error) {
+	return os.Open(a.path)
 }
 
 func (a *fileAsset) Asset() string {
@@ -78,13 +82,8 @@ func NewFileStream(inputDirectory string) AssetStreamer {
 					return err
 				}
 
-				file, err := os.Open(path)
-				if err != nil {
-					return err
-				}
-
 				select {
-				case stream <- &fileAsset{File: file, Name: relPath}:
+				case stream <- &fileAsset{Name: relPath, path: path}:
 				case <-ctx.Done():
 					return ctx.Err()
 				}
@@ -114,12 +113,8 @@ func NewFilenameStream(directory string, files ...string) AssetStreamer {
 
 			for _, filename := range files {
 				path := filepath.Join(directory, filename)
-				reader, err := os.Open(path)
-				if err != nil {
-					errc <- err
-				}
 				select {
-				case stream <- &fileAsset{File: reader, Name: filename}:
+				case stream <- &fileAsset{Name: filename, path: path}:
 				case <-ctx.Done():
 					errc <- ctx.Err()
 					return

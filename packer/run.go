@@ -254,20 +254,25 @@ func decode(ctx context.Context, padding int, in <-chan Asset, out chan<- *asset
 	}
 
 	for asset := range in {
-		defer asset.Close()
+		assetReader, err := asset.Reader()
+		if err != nil {
+			publishResult(nil, err)
+			continue
+		}
+		defer assetReader.Close()
 
-		img, _, err := image.Decode(asset)
+		cfg, _, err := image.DecodeConfig(assetReader)
+		//img, _, err := image.Decode(assetReader)
 		if err != nil {
 			publishResult(nil, err)
 			continue
 		}
 
-		rect := img.Bounds()
 		spr := &sprite{
+			Asset:   asset,
 			path:    asset.Asset(),
-			img:     img,
-			w:       rect.Dx(),
-			h:       rect.Dy(),
+			w:       cfg.Width,
+			h:       cfg.Height,
 			padding: padding,
 		}
 
