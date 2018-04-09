@@ -78,3 +78,18 @@ To add a new target output format;
 3. Finally export the target by adding a `template.Fomat` to the `target/target.go` file.
 
 Use should now be able to reference your target by name from the `target` package.
+
+### Benchmarks
+
+These are the results I get on my machine when packing 55 sample assets.
+
+```
+go test ./packer -bench=. -benchmem
+goos: darwin
+goarch: amd64
+pkg: github.com/RaniSputnik/lovepac/packer
+BenchmarkPack512x512-8                30          34203876 ns/op        15595351 B/op     488294 allocs/op
+BenchmarkPack1024x1024-8               5         213482596 ns/op        20351716 B/op     824520 allocs/op
+BenchmarkPack2048x2048-8               3         358792110 ns/op        28359928 B/op     882708 allocs/op
+BenchmarkPack4096x4096-8               3         362213473 ns/op        28358781 B/op     882699 allocs/op
+```
