@@ -3,7 +3,6 @@ package packer
 import (
 	"fmt"
 	"image"
-	"image/draw"
 	"image/png"
 	"io"
 	"text/template"
@@ -40,7 +39,7 @@ func (a *atlas) CreateImage() (image.Image, error) {
 			return nil, fmt.Errorf("Failed to decode asset '%s': %s", spr.path, err)
 		}
 
-		draw.Draw(img, rect, sprImg, image.ZP, draw.Src)
+		fastDraw(img, rect, sprImg)
 	}
 
 	return img, nil
