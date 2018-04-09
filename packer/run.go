@@ -254,23 +254,23 @@ func decode(ctx context.Context, padding int, in <-chan Asset, out chan<- *asset
 	}
 
 	for asset := range in {
+		assetPath := asset.Asset()
 		assetReader, err := asset.Reader()
 		if err != nil {
-			publishResult(nil, err)
+			publishResult(nil, fmt.Errorf("Failed to read asset '%s': %s", assetPath, err))
 			continue
 		}
 		defer assetReader.Close()
 
 		cfg, _, err := image.DecodeConfig(assetReader)
-		//img, _, err := image.Decode(assetReader)
 		if err != nil {
-			publishResult(nil, err)
+			publishResult(nil, fmt.Errorf("Failed to read asset metadata '%s': %s", assetPath, err))
 			continue
 		}
 
 		spr := &sprite{
 			Asset:   asset,
-			path:    asset.Asset(),
+			path:    assetPath,
 			w:       cfg.Width,
 			h:       cfg.Height,
 			padding: padding,
