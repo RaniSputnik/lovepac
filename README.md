@@ -84,12 +84,16 @@ Use should now be able to reference your target by name from the `target` packag
 These are the results I get on my machine when packing 55 sample assets.
 
 ```
-go test ./packer -bench=. -benchmem
+$ go test ./packer -bench=. -benchmem
 goos: darwin
 goarch: amd64
 pkg: github.com/RaniSputnik/lovepac/packer
-BenchmarkPack512x512-8                30          34203876 ns/op        15595351 B/op     488294 allocs/op
-BenchmarkPack1024x1024-8               5         213482596 ns/op        20351716 B/op     824520 allocs/op
-BenchmarkPack2048x2048-8               3         358792110 ns/op        28359928 B/op     882708 allocs/op
-BenchmarkPack4096x4096-8               3         362213473 ns/op        28358781 B/op     882699 allocs/op
+BenchmarkPack512x512-8                        50          27129564 ns/op        13675566 B/op       8004 allocs/op
+BenchmarkPack1024x1024-8                      10         176355710 ns/op        17693480 B/op     160332 allocs/op
+BenchmarkPack2048x2048-8                       5         287248694 ns/op        25469216 B/op     160370 allocs/op
+BenchmarkPack4096x4096-8                       5         290687305 ns/op        25469579 B/op     160372 allocs/op
+BenchmarkPackOneAsset512x512-8               100          15301139 ns/op         2005043 B/op        186 allocs/op
+BenchmarkPackOneAsset1024x1024-8              30          40203031 ns/op         5166106 B/op        185 allocs/op
+BenchmarkPackOneAsset2048x2048-8              10         135694018 ns/op        17776404 B/op        185 allocs/op
+BenchmarkPackOneAsset4096x4096-8              10         140962040 ns/op        17776521 B/op        186 allocs/op
 ```
