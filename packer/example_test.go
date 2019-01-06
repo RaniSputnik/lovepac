@@ -2,13 +2,13 @@ package packer_test
 
 import (
 	"context"
-	"log"
+	"fmt"
 
 	"github.com/RaniSputnik/lovepac/packer"
 	"github.com/RaniSputnik/lovepac/target"
 )
 
-func ExampleBasic() {
+func ExampleRun() {
 	params := packer.Params{
 		Name:   "myatlas",
 		Format: target.Love,
@@ -17,5 +17,8 @@ func ExampleBasic() {
 		Width:  512,
 		Height: 512,
 	}
-	log.Fatal(packer.Run(context.Background(), &params))
+	if err := packer.Run(context.Background(), &params); err != nil {
+		fmt.Print("Texture packing complete")
+	}
+	// Output: Texture packing complete
 }
