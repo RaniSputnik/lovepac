@@ -126,4 +126,35 @@ func NewFilenameStream(directory string, files ...string) AssetStreamer {
 	})
 }
 
-// TODO we could match globs too, that'd be cool
+func NewFileGlobStream(globPattern string) AssetStreamer {
+	return AssetStreamerFunc(func(ctx context.Context) (<-chan Asset, <-chan error) {
+		stream := make(chan Asset)
+		errc := make(chan error, 1)
+
+		go func() {
+			defer close(stream)
+			defer close(errc)
+
+			if ctx == nil {
+				errc <- errContextNil
+				return
+			}
+
+			matches, err := filepath.Glob(globPattern)
+			if err != nil {
+				errc <- err
+			}
+
+			for _, path := range matches {
+				select {
+				case stream <- &fileAsset{Name: filepath.Base(path), path: path}:
+				case <-ctx.Done():
+					errc <- ctx.Err()
+					return
+				}
+			}
+		}()
+
+		return stream, errc
+	})
+}
