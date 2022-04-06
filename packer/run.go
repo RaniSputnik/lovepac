@@ -156,13 +156,14 @@ func Run(ctx context.Context, params *Params) error {
 		atlasName := fmt.Sprintf("%s-%d", params.Name, totalNumberOfAtlases)
 		atlas := &atlas{
 			Name:         atlasName,
-			Sprites:      completedSprites,
+			Sprites:      make([]packing.Block, len(completedSprites)),
 			DescFilename: fmt.Sprintf("%s.%s", atlasName, params.Format.Ext),
 			// TODO add image type parameter
 			ImageFilename: fmt.Sprintf("%s.%s", atlasName, "png"),
 			Width:         params.Width,
 			Height:        params.Height,
 		}
+		copy(atlas.Sprites, completedSprites)
 		wg.Add(1)
 
 		go func(ctx context.Context, errc chan<- error, wg *sync.WaitGroup) {
