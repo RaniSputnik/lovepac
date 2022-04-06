@@ -2,16 +2,15 @@ package packer
 
 import (
 	"image"
-	"image/draw"
+
+	"golang.org/x/image/draw"
 )
 
 func fastDraw(dst *image.NRGBA, r image.Rectangle, src image.Image) {
-	switch srcType := src.(type) {
-	case *image.NRGBA:
-		drawCopySrc(dst, r, srcType, image.ZP)
-	default:
-		draw.Draw(dst, r, src, image.ZP, draw.Src)
-	}
+	w, h := r.Dx(), r.Dy()
+	img := image.NewNRGBA(image.Rect(0, 0, w, h))
+	draw.BiLinear.Scale(img, image.Rect(0, 0, w, h), src, src.Bounds(), draw.Src, nil)
+	drawCopySrc(dst, r, img, image.ZP)
 }
 
 func drawCopySrc(dst *image.NRGBA, r image.Rectangle, src *image.NRGBA, sp image.Point) {

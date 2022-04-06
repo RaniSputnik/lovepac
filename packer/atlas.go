@@ -20,6 +20,7 @@ type atlas struct {
 	Width   int
 	Height  int
 	Padding int
+	Scale   float64
 }
 
 func (a *atlas) CreateImage() (image.Image, error) {
@@ -49,19 +50,11 @@ func (a *atlas) Output(outputter Outputter, descriptorTemplate *template.Templat
 	errc := make(chan error, 2)
 	go func() {
 		// Create and write the resulting image
-		errc <- withFile(outputter, a.ImageFilename, func(writer io.Writer) error {
-			img, err := a.CreateImage()
-			if err != nil {
-				return err
-			}
-			return png.Encode(writer, img)
-		})
+		errc <- a.OutputImage(outputter, descriptorTemplate)
 	}()
 	go func() {
 		// Create and write the file that describes the image
-		errc <- withFile(outputter, a.DescFilename, func(writer io.Writer) error {
-			return descriptorTemplate.Execute(writer, a)
-		})
+		errc <- a.OutputDesc(outputter, false, descriptorTemplate)
 	}()
 	// Drain error channel
 	for i := 0; i < 2; i++ {
@@ -70,4 +63,22 @@ func (a *atlas) Output(outputter Outputter, descriptorTemplate *template.Templat
 		}
 	}
 	return nil
+}
+
+func (a *atlas) OutputImage(imageOutputter Outputter, descriptorTemplate *template.Template) error {
+	// Create and write the resulting image
+	return withFile(imageOutputter, a.ImageFilename, false, func(writer io.Writer) error {
+		img, err := a.CreateImage()
+		if err != nil {
+			return err
+		}
+		return png.Encode(writer, img)
+	})
+}
+
+func (a *atlas) OutputDesc(descOutputter Outputter, append bool, descriptorTemplate *template.Template) error {
+	// Create and write the file that describes the image
+	return withFile(descOutputter, a.DescFilename, append, func(writer io.Writer) error {
+		return descriptorTemplate.Execute(writer, a)
+	})
 }

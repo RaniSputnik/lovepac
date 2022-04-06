@@ -28,8 +28,9 @@ func (s *sprite) Place(x int, y int) {
 }
 
 // Used for template rendering
-func (s *sprite) Name() string { return strings.Replace(path.Base(s.path), path.Ext(s.path), "", 1) }
-func (s *sprite) Left() int    { return s.x }
-func (s *sprite) Top() int     { return s.y }
-func (s *sprite) Width() int   { return s.w }
-func (s *sprite) Height() int  { return s.h }
+func (s *sprite) Name() string        { return strings.Replace(path.Base(s.path), path.Ext(s.path), "", 1) }
+func (s *sprite) DisplayName() string { return strings.Replace(s.path, path.Ext(s.path), "", 1) }
+func (s *sprite) Left() int           { return s.x }
+func (s *sprite) Top() int            { return s.y }
+func (s *sprite) Width() int          { return s.w }
+func (s *sprite) Height() int         { return s.h }

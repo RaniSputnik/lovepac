@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"image"
 	"sort"
-
 	"sync"
 
 	"github.com/RaniSputnik/lovepac/packing"
 	"github.com/RaniSputnik/lovepac/target"
 )
+
+type NameFormatter func(name string, index int) string
 
 var (
 	// DefaultAtlasName is the default base name for
@@ -21,19 +22,26 @@ var (
 	DefaultAtlasWidth = 2048
 	// DefaultAtlasHeight is the height used if no height is specified
 	DefaultAtlasHeight = 2048
+	// DefaultNameFormatter
+	DefaultNameFormatter = func(name string, index int) string {
+		return fmt.Sprintf("%s-%d", name, index)
+	}
 )
 
 // Params are passed to the packer.Run to configure the texture packing.
 // Input, Output and Format are required, all other options will use
 // sensible defaults if not explicitly provided.
 type Params struct {
-	Name          string
-	Input         AssetStreamer
-	Output        Outputter
-	Format        target.Format
-	Width, Height int
-	Padding       int
-	MaxAtlases    int
+	Name             string
+	Input            AssetStreamer
+	Output           Outputter
+	Format           target.Format
+	Width, Height    int
+	Padding          int
+	MaxAtlases       int
+	Scale            float64
+	CombineDescFiles bool
+	NameFormatter    NameFormatter
 }
 
 // applySensibleDefaults will fill in nil values with values
@@ -47,6 +55,12 @@ func (p *Params) applySensibleDefaults() {
 	}
 	if p.Height == 0 {
 		p.Height = DefaultAtlasHeight
+	}
+	if p.Scale == 0 {
+		p.Scale = 1.0
+	}
+	if p.NameFormatter == nil {
+		p.NameFormatter = DefaultNameFormatter
 	}
 }
 
@@ -118,7 +132,7 @@ func Run(ctx context.Context, params *Params) error {
 	params.applySensibleDefaults()
 
 	// Read the images from the input directory
-	sprites, err := readAssetStream(ctx, params.Input, params.Padding)
+	sprites, err := readAssetStream(ctx, params.Input, params.Padding, params.Scale)
 	if err != nil {
 		return err
 	}
@@ -131,6 +145,7 @@ func Run(ctx context.Context, params *Params) error {
 	incompleteSprites := make([]packing.Block, 0, totalNumberOfSprites)
 	wg := &sync.WaitGroup{}
 	errc := make(chan error)
+	var descAtlases []*atlas
 	for {
 		// Return error if maxAtlases param exceeded
 		if params.MaxAtlases > 0 && totalNumberOfAtlases == params.MaxAtlases {
@@ -153,26 +168,43 @@ func Run(ctx context.Context, params *Params) error {
 		}
 
 		totalNumberOfAtlases++
-		atlasName := fmt.Sprintf("%s-%d", params.Name, totalNumberOfAtlases)
+		atlasName := params.NameFormatter(params.Name, totalNumberOfAtlases)
+		descName := params.NameFormatter(params.Name, totalNumberOfAtlases)
+		if params.CombineDescFiles {
+			descName = params.Name
+		}
 		atlas := &atlas{
 			Name:         atlasName,
 			Sprites:      make([]packing.Block, len(completedSprites)),
-			DescFilename: fmt.Sprintf("%s.%s", atlasName, params.Format.Ext),
+			DescFilename: fmt.Sprintf("%s.%s", descName, params.Format.Ext),
 			// TODO add image type parameter
 			ImageFilename: fmt.Sprintf("%s.%s", atlasName, "png"),
 			Width:         params.Width,
 			Height:        params.Height,
+			Scale:         params.Scale,
 		}
 		copy(atlas.Sprites, completedSprites)
-		wg.Add(1)
 
-		go func(ctx context.Context, errc chan<- error, wg *sync.WaitGroup) {
-			select {
-			case errc <- atlas.Output(params.Output, params.Format.Template):
-			case <-ctx.Done():
-			}
-			wg.Done()
-		}(ctx, errc, wg)
+		if params.CombineDescFiles {
+			descAtlases = append(descAtlases, atlas)
+			wg.Add(1)
+			go func(ctx context.Context, errc chan<- error, wg *sync.WaitGroup) {
+				select {
+				case errc <- atlas.OutputImage(params.Output, params.Format.Template):
+				case <-ctx.Done():
+				}
+				wg.Done()
+			}(ctx, errc, wg)
+		} else {
+			wg.Add(1)
+			go func(ctx context.Context, errc chan<- error, wg *sync.WaitGroup) {
+				select {
+				case errc <- atlas.Output(params.Output, params.Format.Template):
+				case <-ctx.Done():
+				}
+				wg.Done()
+			}(ctx, errc, wg)
+		}
 
 		totalNumberOfIncompletedSprites := len(incompleteSprites)
 		// If there are no more sprites that are incomplete, we are done!
@@ -185,6 +217,21 @@ func Run(ctx context.Context, params *Params) error {
 		}
 		// Otherwise continue
 		sprites = incompleteSprites
+	}
+
+	if len(descAtlases) > 0 {
+		wg.Add(1)
+		go func(ctx context.Context, errc chan<- error, wg *sync.WaitGroup) {
+			defer wg.Done()
+			for i := range descAtlases {
+				atlas := descAtlases[i]
+				select {
+				case errc <- atlas.OutputDesc(params.Output, i > 0, params.Format.Template):
+				case <-ctx.Done():
+					return
+				}
+			}
+		}(ctx, errc, wg)
 	}
 
 	go func() {
@@ -206,7 +253,7 @@ type assetDecodeResult struct {
 	Err    error
 }
 
-func readAssetStream(ctx context.Context, assetStream AssetStreamer, padding int) ([]packing.Block, error) {
+func readAssetStream(ctx context.Context, assetStream AssetStreamer, padding int, scale float64) ([]packing.Block, error) {
 	ctx, cancelCtx := context.WithCancel(ctx)
 	defer cancelCtx()
 	// Stream the input
@@ -218,7 +265,7 @@ func readAssetStream(ctx context.Context, assetStream AssetStreamer, padding int
 	wg.Add(numDecoders)
 	for i := 0; i < numDecoders; i++ {
 		go func() {
-			decode(ctx, padding, assets, out)
+			decode(ctx, padding, scale, assets, out)
 			wg.Done()
 		}()
 	}
@@ -246,7 +293,7 @@ func readAssetStream(ctx context.Context, assetStream AssetStreamer, padding int
 // Decodes assets from the in channel and publishes the results to
 // the out channel. Will continue even after errors have been discovered
 // cancel the context to interrupt early.
-func decode(ctx context.Context, padding int, in <-chan Asset, out chan<- *assetDecodeResult) {
+func decode(ctx context.Context, padding int, scale float64, in <-chan Asset, out chan<- *assetDecodeResult) {
 	publishResult := func(spr *sprite, err error) {
 		select {
 		case out <- &assetDecodeResult{spr, err}:
@@ -272,8 +319,8 @@ func decode(ctx context.Context, padding int, in <-chan Asset, out chan<- *asset
 		spr := &sprite{
 			Asset:   asset,
 			path:    assetPath,
-			w:       cfg.Width,
-			h:       cfg.Height,
+			w:       int(float64(cfg.Width) * scale),
+			h:       int(float64(cfg.Height) * scale),
 			padding: padding,
 		}
 

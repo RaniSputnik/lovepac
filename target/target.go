@@ -34,6 +34,8 @@ var (
 	Love = Format{"love", loveTemplate, "lua"}
 	// Starling format for the Starling game engine
 	Starling = Format{"starling", starlingTemplate, "xml"}
+	// Spine format for the Spine tool
+	Spine = Format{"spine", spineTemplate, "atlas"}
 )
 
 var allFormats = []Format{Love, Starling}

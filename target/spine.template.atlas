@@ -1,0 +1,8 @@
+{{.ImageFilename}}
+size:{{.Width}},{{.Height}}
+scale:{{.Scale}}
+{{- range .Sprites}}
+{{.DisplayName}}
+bounds:{{.Left}},{{.Top}},{{.Width}},{{.Height}}
+{{- end}}
+
